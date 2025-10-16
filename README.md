@@ -1,3 +1,7 @@
+# PoliNorError.Extensions.DependencyInjection
+
+![PoliNorError.Extensions.DependencyInjection](PoliNorError.png)
+
 The PoliNorError.Extensions.DependencyInjection package extends PoliNorError library to provide integration with Microsoft Dependency Injection.
 
 ## ⚡ Quick Start
