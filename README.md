@@ -51,6 +51,23 @@ public class AnotherPolicyBuilder : IPolicyBuilder<AnotherPolicyBuilder>
             .WithWait(TimeSpan.FromSeconds(1));
 }
 ```
+, where `RetryLoggingErrorProcessor<T>`: 
+```csharp
+class RetryLoggingErrorProcessor<T> : ErrorProcessor
+{
+    private readonly ILogger<T> _logger;
+
+    public RetryLoggingErrorProcessor(ILogger<T> logger) => _logger = logger;
+
+    public override void Execute(Exception error,
+        ProcessingErrorInfo? info = null,
+        CancellationToken token = default)
+    {
+        _logger.LogError(error,
+            "An error occurred while doing work on {Attempt} attempt.",
+            info.GetRetryCount() + 1);
+    }
+}
 
 ---
 
@@ -128,35 +145,8 @@ public class Worker
 
 ---
 
-## 📌 Example Error Processor
+## 🏆 Samples
 
-```csharp
-class RetryLoggingErrorProcessor<T> : ErrorProcessor
-{
-    private readonly ILogger<T> _logger;
-
-    public RetryLoggingErrorProcessor(ILogger<T> logger) => _logger = logger;
-
-    public override void Execute(Exception error,
-        ProcessingErrorInfo? info = null,
-        CancellationToken token = default)
-    {
-        _logger.LogError(error,
-            "An error occurred while doing work on {Attempt} attempt.",
-            info.GetRetryCount() + 1);
-    }
-}
-```
-
----
-
-## 🏆 Summary
-
-The **unique combination** of:
-
-- `IPolicyBuilder<TFactory>` → declarative, DI-friendly policy construction  
-- `IPolicy<T>` → type-safe, DI-resolved policy consumption  
-
-…makes this library a powerful, extensible way to manage policies in .NET applications.
+See samples folder for concrete example. [![CSharp](https://img.shields.io/badge/C%23-code-blue.svg)](samples)
 
 ---
