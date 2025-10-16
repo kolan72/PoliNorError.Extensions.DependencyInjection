@@ -68,7 +68,7 @@ class RetryLoggingErrorProcessor<T> : ErrorProcessor
             info.GetRetryCount() + 1);
     }
 }
-
+```
 ---
 
 ### 3. Consume policies in your services
@@ -109,15 +109,17 @@ public class Worker
 
 ## ✨ Key Features
 
-- **`IPolicyBuilder<TBuilder>`**  
+- **IPolicyBuilder<TBuilder>**  
   - A builder abstraction for creating policies.  
   - Encapsulates configuration (retry count, wait strategy, error processors, etc.).  
   - Registered automatically into DI via assembly scanning.  
 
-- **`IPolicy<T>`**  
+- **IPolicy<T>**  
+
   - A closed generic wrapper that represents a policy built by a specific builder.  
   - Resolved directly from DI, giving consumers a type-safe handle to the correct policy.  
   - Internally backed by `ProxyPolicy<T>` which delegates to the builder’s `Build()` result.  
+
 
 - **Automatic DI Registration**  
   - `AddPoliNorError()` scans assemblies for all `IPolicyBuilder<>` implementations.  
