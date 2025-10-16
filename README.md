@@ -2,7 +2,7 @@
 
 ![PoliNorError.Extensions.DependencyInjection](PoliNorError.png)
 
-The PoliNorError.Extensions.DependencyInjection package extends PoliNorError library to provide integration with Microsoft Dependency Injection.
+The PoliNorError.Extensions.DependencyInjection package extends  [PoliNorError](https://github.com/kolan72/PoliNorError) library to provide integration with Microsoft Dependency Injection.
 
 ## ⚡ Quick Start
 
@@ -88,8 +88,8 @@ public class Worker
 
     public async Task DoWorkAsync(CancellationToken token)
     {
-        var result1 = await _somePolicy.HandleAsync(MightThrowAsync, false, token);
-        var result2 = await _anotherPolicy.HandleAsync(MightThrowAsync, false, token);
+        var result1 = await _somePolicy.HandleAsync(MightThrowAsync, false, token).ConfigureAwait(false);
+        var result2 = await _anotherPolicy.HandleAsync(MightThrowAsync, false, token).ConfigureAwait(false);
     }
 
     private async Task MightThrowAsync(CancellationToken token)
@@ -109,8 +109,8 @@ public class Worker
 
 ## ✨ Key Features
 
-- **`IPolicyBuilder<TFactory>`**  
-  - A factory abstraction for building policies.  
+- **`IPolicyBuilder<TBuilder>`**  
+  - A builder abstraction for creating policies.  
   - Encapsulates configuration (retry count, wait strategy, error processors, etc.).  
   - Registered automatically into DI via assembly scanning.  
 
@@ -141,7 +141,7 @@ public class Worker
 - **Separation of concerns**: Builders configure, consumers execute.  
 - **Discoverable**: Constructor injection makes dependencies explicit.  
 - **Testable**: Swap out builders or inject fake policies in tests.  
-- **Extensible**: Add new policies by just adding new builders.  
+- **Extensible**:  Add new [PoliNorError](https://github.com/kolan72/PoliNorError) policies by just adding new builders.
 
 ---
 
