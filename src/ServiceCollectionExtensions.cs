@@ -14,8 +14,8 @@ namespace PoliNorError.Extensions.DependencyInjection
 		/// core <see cref="IPolicy{T}"/> service using the <see cref="ProxyPolicy{T}"/> implementation.
 		/// </remarks>
 		/// <param name="services">The <see cref="IServiceCollection"/> to add the services to.</param>
-		/// <param name="lifetime">The <see cref="ServiceLifetime"/> to use for registration of all PoliNorError services. Defaults to <see cref="ServiceLifetime.Transient"/>.</param>
 		/// <param name="assemblyToScan">The <see cref="Assembly"/> to scan for types that implement <see cref="IPolicyBuilder{TBuilder}"/>. If <see langword="null"/>, the assembly containing this extension method is used.</param>
+		/// <param name="lifetime">The <see cref="ServiceLifetime"/> to use for registration of all PoliNorError services. Defaults to <see cref="ServiceLifetime.Transient"/>.</param>
 		/// <returns>The <see cref="IServiceCollection"/> for method chaining.</returns>
 		public static IServiceCollection AddPoliNorError(
 		this IServiceCollection services,
@@ -30,11 +30,11 @@ namespace PoliNorError.Extensions.DependencyInjection
 
 		/// <summary>
 		/// Scans the specified assembly (or the assembly containing the extension method if null)
-		/// and registers all concrete classes that implement the IPolicyBuilder<TBuilder> interface.
+		/// and registers all concrete classes that implement the <see cref="IPolicyBuilder{TBuilder}"/> interface.
 		/// </summary>
 		/// <param name="services">The IServiceCollection instance.</param>
-		/// <param name="lifetime">The ServiceLifetime to use for registration (Transient, Scoped, or Singleton).</param>
 		/// <param name="assemblyToScan">The assembly to scan for types. If null, the calling assembly is used.</param>
+		/// <param name="lifetime">The ServiceLifetime to use for registration (Transient, Scoped, or Singleton).</param>
 		/// <returns>The IServiceCollection for chaining.</returns>
 		internal static IServiceCollection AddAllPolicyBuilders(
 			this IServiceCollection services,
