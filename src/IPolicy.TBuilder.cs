@@ -10,4 +10,3 @@
 	/// <typeparam name="TBuilder">The type of the policy builder associated with this policy, which must implement <see cref="IPolicyBuilder{TBuilder}"/>.</typeparam>
 	public interface IPolicy<TBuilder> : IPolicyBase where TBuilder : IPolicyBuilder<TBuilder>;
 }
-

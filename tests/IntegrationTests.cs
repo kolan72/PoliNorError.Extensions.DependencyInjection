@@ -75,6 +75,22 @@ namespace PoliNorError.Extensions.DependencyInjection.Tests
 		}
 
 		[Test]
+		public void Should_Resolve_Policy_Inherited_From_PolicyBuilder()
+		{
+			var policy = _serviceProvider!.GetService<IPolicy<SomePolicyBuilder>>();
+			Assert.That(policy, Is.Not.Null);
+			Assert.That(policy, Is.TypeOf<ProxyPolicy<SomePolicyBuilder>>());
+			Assert.That(policy?.PolicyName, Is.EqualTo("SomePolicy"));
+		}
+
+		[Test]
+		public void Should_Configurator_Configure_In_Policy_Created_By_PolicyBuilder_Inheritor()
+		{
+			var policy = _serviceProvider!.GetService<IPolicy<SomePolicyBuilder>>();
+			Assert.That(policy!.PolicyProcessor.Count(), Is.EqualTo(1));
+		}
+
+		[Test]
 		public void Should_CreateSeparateInstancesForTransientLifetime()
 		{
 			// Act

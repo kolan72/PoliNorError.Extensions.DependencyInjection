@@ -14,7 +14,7 @@ namespace PoliNorError.Extensions.DependencyInjection.Tests
 		{
 			var mockPolicy = new TestPolicy();
 			var factory = new TestPolicyBuilder(mockPolicy);
-			var proxy = new ProxyPolicy<TestPolicyBuilder>(factory);
+			var proxy = new ProxyPolicy<TestPolicyBuilder>(factory, null!);
 
 			proxy.Handle(() => { });
 
@@ -26,10 +26,8 @@ namespace PoliNorError.Extensions.DependencyInjection.Tests
 		{
 			var mockPolicy = new TestPolicy();
 			var factory = new TestPolicyBuilder(mockPolicy);
-			var proxy = new ProxyPolicy<TestPolicyBuilder>(factory);
-
-			var result = proxy.Handle(() => 42);
-
+			var proxy = new ProxyPolicy<TestPolicyBuilder>(factory, null!);
+			var _ = proxy.Handle(() => 42);
 			Assert.That(mockPolicy.HandleFuncCalled, Is.True);
 		}
 
@@ -38,7 +36,7 @@ namespace PoliNorError.Extensions.DependencyInjection.Tests
 		{
 			var mockPolicy = new TestPolicy();
 			var factory = new TestPolicyBuilder(mockPolicy);
-			var proxy = new ProxyPolicy<TestPolicyBuilder>(factory);
+			var proxy = new ProxyPolicy<TestPolicyBuilder>(factory, null!);
 
 			await proxy.HandleAsync(ct => Task.CompletedTask);
 
@@ -50,11 +48,10 @@ namespace PoliNorError.Extensions.DependencyInjection.Tests
 		{
 			var mockPolicy = new TestPolicy("TestPolicy");
 			var factory = new TestPolicyBuilder(mockPolicy);
-			var proxy = new ProxyPolicy<TestPolicyBuilder>(factory);
+			var proxy = new ProxyPolicy<TestPolicyBuilder>(factory, null!);
 
 			Assert.That(proxy.PolicyName, Is.EqualTo("TestPolicy"));
 			Assert.That(proxy.PolicyProcessor, Is.SameAs(mockPolicy.PolicyProcessor));
 		}
 	}
-
 }
