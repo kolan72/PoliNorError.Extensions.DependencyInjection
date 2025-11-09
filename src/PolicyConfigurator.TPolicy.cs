@@ -6,9 +6,4 @@
 	{
 		public abstract void Configure(TPolicy policy);
 	}
-
-	internal interface ISetConfigurator
-	{
-		void SetConfigurator(IServiceProvider serviceProvider);
-	}
 }
