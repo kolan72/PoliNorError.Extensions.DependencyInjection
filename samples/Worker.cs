@@ -1,5 +1,6 @@
 ﻿using PoliNorError.Extensions.DependencyInjection;
 using Samples.Builders;
+using PoliNorError;
 
 namespace Samples
 {
@@ -16,8 +17,8 @@ namespace Samples
 
 		public async Task DoWorkAsync(CancellationToken token)
 		{
-			await _somePolicy.HandleAsync(MightThrowAsync, false, token).ConfigureAwait(false);
-			await _anotherPolicy.HandleAsync(MightThrowAsync, false, token).ConfigureAwait(false);
+			await _somePolicy.HandleAsync(MightThrowAsync, token);
+			await _anotherPolicy.HandleAsync(MightThrowAsync, token);
 		}
 
 		private async Task MightThrowAsync(CancellationToken token)
