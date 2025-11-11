@@ -6,9 +6,9 @@ namespace Samples.Builders
 {
 	public class SomePolicyBuilder : IPolicyBuilder<SomePolicyBuilder>
 	{
-		private readonly ILoggerFactory _logger;
+		private readonly ILogger<SomePolicyBuilder> _logger;
 
-		public SomePolicyBuilder(ILoggerFactory logger)
+		public SomePolicyBuilder(ILogger<SomePolicyBuilder> logger)
 		{
 			_logger = logger;
 		}
@@ -16,7 +16,7 @@ namespace Samples.Builders
 		public IPolicyBase Build()
 		{
 			return new RetryPolicy(3)
-					.WithErrorProcessor(new RetryLoggingErrorProcessor<SomePolicyBuilder>(_logger.CreateLogger<SomePolicyBuilder>()))
+					.WithErrorProcessor(new RetryLoggingErrorProcessor(_logger))
 					.WithWait(new TimeSpan(0, 0, 3));
 		}
 	}

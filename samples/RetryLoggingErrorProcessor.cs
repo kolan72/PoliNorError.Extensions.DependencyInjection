@@ -3,11 +3,11 @@ using PoliNorError;
 
 namespace Samples
 {
-	public class RetryLoggingErrorProcessor<T> : ErrorProcessor
+	public class RetryLoggingErrorProcessor : ErrorProcessor
 	{
-		private readonly ILogger<T> _logger;
+		private readonly ILogger _logger;
 
-		public RetryLoggingErrorProcessor(ILogger<T> logger)
+		public RetryLoggingErrorProcessor(ILogger logger)
 		{
 			_logger = logger;
 		}
