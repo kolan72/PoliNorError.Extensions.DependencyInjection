@@ -14,7 +14,7 @@ namespace Samples
 		static async Task Main(string[] args)
 #pragma warning restore RCS1163 // Unused parameter
 		{
-			using var serviceProvider = new ServiceCollection()
+			await using var serviceProvider = new ServiceCollection()
 				.AddLogging(builder =>
 				{
 					builder.AddConsole();
