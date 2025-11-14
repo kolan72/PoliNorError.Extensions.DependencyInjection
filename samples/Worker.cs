@@ -23,7 +23,7 @@ namespace Samples
 
 		private async Task MightThrowAsync(CancellationToken token)
 		{
-			await Task.Delay(100); // Simulate async work
+			await Task.Delay(100, token); // Simulate async work
 			throw new SomeException("Something went wrong in MightThrowAsync.");
 		}
 
