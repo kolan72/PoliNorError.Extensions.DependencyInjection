@@ -18,7 +18,7 @@ namespace Samples
 		{
 			_logger.LogError(error,
 							"An error occurred while doing work on {Attempt} attempt.",
-							catchBlockProcessErrorInfo.GetRetryCount() + 1);
+							catchBlockProcessErrorInfo.GetAttemptCount());
 		}
 	}
 }
