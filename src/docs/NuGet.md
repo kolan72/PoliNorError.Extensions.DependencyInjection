@@ -7,7 +7,7 @@ Get up and running in **3 simple steps**:
 ### 1. Register policies in DI
 
 ```csharp
-// Program.cs / Startup.cs
+// Program.cs
 services.AddPoliNorError(
 	Assembly.GetExecutingAssembly());
 ```
@@ -21,14 +21,19 @@ This scans your assembly for all `IPolicyBuilder<>` implementations and wires up
 ```csharp
 public class SomePolicyBuilder : IPolicyBuilder<SomePolicyBuilder>
 {
-    private readonly ILoggerFactory _logger;
-    public SomePolicyBuilder(ILoggerFactory logger) => _logger = logger;
+	private readonly ILogger<SomePolicyBuilder> _logger;
 
-    public IPolicyBase Build() =>
-        new RetryPolicy(3)
-            .WithErrorProcessor(new RetryLoggingErrorProcessor<SomePolicyBuilder>(
-                _logger.CreateLogger<SomePolicyBuilder>()))
-            .WithWait(TimeSpan.FromSeconds(3));
+	public SomePolicyBuilder(ILogger<SomePolicyBuilder> logger)
+	{
+		_logger = logger;
+	}
+
+	public IPolicyBase Build()
+	{
+		return new RetryPolicy(3)
+				.WithErrorProcessor(new RetryLoggingErrorProcessor(_logger))
+				.WithWait(new TimeSpan(0, 0, 3));
+	}
 }
 ```
 
@@ -37,32 +42,40 @@ Another example:
 ```csharp
 public class AnotherPolicyBuilder : IPolicyBuilder<AnotherPolicyBuilder>
 {
-    private readonly ILoggerFactory _logger;
-    public AnotherPolicyBuilder(ILoggerFactory logger) => _logger = logger;
+	private readonly ILogger<AnotherPolicyBuilder> _logger;
 
-    public IPolicyBase Build() =>
-        new RetryPolicy(2)
-            .WithErrorProcessor(new RetryLoggingErrorProcessor<AnotherPolicyBuilder>(
-                _logger.CreateLogger<AnotherPolicyBuilder>()))
-            .WithWait(TimeSpan.FromSeconds(1));
+	public AnotherPolicyBuilder(ILogger<AnotherPolicyBuilder> logger)
+	{
+		_logger = logger;
+	}
+
+	public IPolicyBase Build()
+	{
+		return new RetryPolicy(2)
+			.WithErrorProcessor(new RetryLoggingErrorProcessor(_logger))
+			.WithWait(new TimeSpan(0, 0, 1));
+	}
 }
 ```
-, where `RetryLoggingErrorProcessor<T>`: 
+, where `RetryLoggingErrorProcessor`: 
 ```csharp
-class RetryLoggingErrorProcessor<T> : ErrorProcessor
+public class RetryLoggingErrorProcessor : ErrorProcessor
 {
-    private readonly ILogger<T> _logger;
+	private readonly ILogger _logger;
 
-    public RetryLoggingErrorProcessor(ILogger<T> logger) => _logger = logger;
+	public RetryLoggingErrorProcessor(ILogger logger)
+	{
+		_logger = logger;
+	}
 
-    public override void Execute(Exception error,
-        ProcessingErrorInfo? info = null,
-        CancellationToken token = default)
-    {
-        _logger.LogError(error,
-            "An error occurred while doing work on {Attempt} attempt.",
-            info.GetRetryCount() + 1);
-    }
+	public override void Execute(Exception error,
+								ProcessingErrorInfo? catchBlockProcessErrorInfo = null,
+								CancellationToken token = default)
+	{
+		_logger.LogError(error,
+						"An error occurred while doing work on {Attempt} attempt.",
+						catchBlockProcessErrorInfo.GetRetryCount() + 1);
+	}
 }
 ```
 ---
@@ -84,8 +97,8 @@ public class Worker
 
     public async Task DoWorkAsync(CancellationToken token)
     {
-        var result1 = await _somePolicy.HandleAsync(MightThrowAsync, false, token).ConfigureAwait(false);
-        var result2 = await _anotherPolicy.HandleAsync(MightThrowAsync, false, token).ConfigureAwait(false);
+		await _somePolicy.HandleAsync(MightThrowAsync, token);
+		await _anotherPolicy.HandleAsync(MightThrowAsync, token);
     }
 
     private async Task MightThrowAsync(CancellationToken token)
