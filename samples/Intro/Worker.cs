@@ -1,8 +1,8 @@
 ﻿using PoliNorError.Extensions.DependencyInjection;
-using Samples.Builders;
+using Intro.Builders;
 using PoliNorError;
 
-namespace Samples
+namespace Intro
 {
 	public class Worker
 	{

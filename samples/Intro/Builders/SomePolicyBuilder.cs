@@ -2,7 +2,7 @@
 using PoliNorError;
 using Microsoft.Extensions.Logging;
 
-namespace Samples.Builders
+namespace Intro.Builders
 {
 	public class SomePolicyBuilder : IPolicyBuilder<SomePolicyBuilder>
 	{

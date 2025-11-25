@@ -2,7 +2,7 @@
 using PoliNorError.Extensions.DependencyInjection;
 using PoliNorError;
 
-namespace Samples.Builders
+namespace Intro.Builders
 {
 	public class AnotherPolicyBuilder : IPolicyBuilder<AnotherPolicyBuilder>
 	{

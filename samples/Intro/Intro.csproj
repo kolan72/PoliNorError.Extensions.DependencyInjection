@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\PoliNorError.Extensions.DependencyInjection.csproj" />
+    <ProjectReference Include="..\..\src\PoliNorError.Extensions.DependencyInjection.csproj" />
   </ItemGroup>
 
 </Project>
