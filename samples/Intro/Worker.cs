@@ -1,6 +1,7 @@
 ﻿using PoliNorError.Extensions.DependencyInjection;
 using Intro.Builders;
 using PoliNorError;
+using Shared;
 
 namespace Intro
 {
@@ -25,13 +26,6 @@ namespace Intro
 		{
 			await Task.Delay(100, token); // Simulate async work
 			throw new SomeException("Something went wrong in MightThrowAsync.");
-		}
-
-#pragma warning disable RCS1194 // Implement exception constructors
-		public class SomeException : Exception
-#pragma warning restore RCS1194 // Implement exception constructors
-		{
-			public SomeException(string message) : base(message) { }
 		}
 	}
 }
