@@ -161,8 +161,23 @@ public class Worker
 
 For more complex scenarios, `PoliNorError.Extensions.DependencyInjectio`n supports an advanced pattern that separates policy **creation** from policy **configuration**. 
 
-- `PolicyConfigurator<TPolicy>` — a base class for encapsulating cross‑cutting configuration logic (logging, enrichment, etc.). Inheritors of `PolicyConfigurator` are automatically resolved from DI.
-- `PolicyBuilder<TPolicy, TConfigurator>` — a base class that encapsulates policy creation and optional configurator wiring.
+### Key Concepts:
+
+- `PolicyConfigurator<TPolicy>` — an abstract base class for encapsulating cross‑cutting configuration logic (logging, enrichment, etc.).
+- `PolicyBuilder<TPolicy, TConfigurator>` — an abstract base class that encapsulates policy creation and optional configurator wiring.
+
+---
+
+### ✅ Inheriting from PolicyConfigurator<TPolicy>
+
+Create a subclass of `PolicyConfigurator<TPolicy>` and override the `Configure` method, where `TPolicy` is a policy from [PoliNorError](https://github.com/kolan72/PoliNorError) library.
+Inheritors of `PolicyConfigurator` are automatically resolved from DI.
+
+---
+
+### ✅ Inheriting from PolicyBuilder<TPolicy, TConfigurator>
+
+Create a subclass of `PolicyBuilder<TPolicy, TConfigurator>` and override the `CreatePolicy` method, where `TPolicy` is a policy from [PoliNorError](https://github.com/kolan72/PoliNorError) library, and `TConfigurator` inherits from `PolicyConfigurator<TPolicy>`.
 
 ---
 
