@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using PoliNorError.Extensions.DependencyInjection;
 using PoliNorError;
+using Shared;
 
 namespace Intro.Builders
 {

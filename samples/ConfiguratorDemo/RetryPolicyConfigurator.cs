@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using PoliNorError;
 using PoliNorError.Extensions.DependencyInjection;
+using Shared;
 
 namespace ConfiguratorDemo
 {
