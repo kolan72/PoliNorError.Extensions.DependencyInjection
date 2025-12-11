@@ -228,7 +228,7 @@ This builder:
 - Assigns a policy name (used later by the configurator).
 - Delegates configuration to `RetryPolicyConfigurator`.
 
-Once created, the `PolicyConfigurator` can be shared across multiple builders:
+Once created, the configurator (a subclass of `PolicyConfigurator`) can be shared across multiple builders:
 
 ```csharp
 public class AnotherPolicyBuilder : PolicyBuilder<RetryPolicy, RetryPolicyConfigurator>, IPolicyBuilder<AnotherPolicyBuilder>
