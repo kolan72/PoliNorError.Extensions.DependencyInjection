@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging.Console;
 using PoliNorError.Extensions.DependencyInjection;
 using System.Reflection;
 
-namespace Samples
+namespace ConfiguratorDemo
 {
 #pragma warning disable S1118 // Utility classes should not have public constructors
 	internal class Program

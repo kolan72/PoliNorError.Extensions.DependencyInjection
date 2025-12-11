@@ -160,6 +160,83 @@ public class Worker
 
 ---
 
+## 🔥 Advanced Usage: Separation of Concerns with Configurators and Builders
+
+For more complex scenarios, `PoliNorError.Extensions.DependencyInjectio`n supports an advanced pattern that separates policy **creation** from policy **configuration**. 
+
+- `PolicyConfigurator<TPolicy>` — a base class for encapsulating cross‑cutting configuration logic (logging, enrichment, etc.). Inheritors of `PolicyConfigurator` are automatically resolved from DI.
+- `PolicyBuilder<TPolicy, TConfigurator>` — a base class that encapsulates policy creation and optional configurator wiring.
+
+---
+
+### ✅ When to Use This Pattern
+
+Use custom builders + configurators when:
+
+- You want **policy creation** and **policy configuration** to be separate concerns.
+- You want to **reuse the same configurator** across multiple builders.
+- You want to keep your builder classes minimal and declarative.
+
+---
+
+### 🧱 Example: Retry Policy With a Custom Configurator
+
+```csharp
+public class RetryPolicyConfigurator : PolicyConfigurator<RetryPolicy>
+{
+    private readonly ILoggerFactory _loggerFactory;
+
+    public RetryPolicyConfigurator(ILoggerFactory loggerFactory)
+    {
+        _loggerFactory = loggerFactory;
+    }
+
+    public override void Configure(RetryPolicy policy)
+        => policy.WithErrorProcessor(
+                new RetryLoggingErrorProcessor(_loggerFactory.CreateLogger(policy.PolicyName)));
+}
+```
+This configurator:
+
+- Receives dependencies via DI (here: `ILoggerFactory`)
+- Adds a logging error processor to the policy
+- Uses the policy name to create a dedicated logger
+
+```csharp
+public class SomePolicyBuilder : PolicyBuilder<RetryPolicy, RetryPolicyConfigurator>, IPolicyBuilder<SomePolicyBuilder>
+{
+    protected override RetryPolicy CreatePolicy() =>
+        new RetryPolicy(3, retryDelay: ConstantRetryDelay.Create(new TimeSpan(0, 0, 3)))
+        .WithPolicyName("SomeRetryPolicy");
+}
+```
+This builder:
+
+- Creates a `RetryPolicy` with a fixed delay.
+- Assigns a policy name (used later by the configurator).
+- Delegates configuration to `RetryPolicyConfigurator`.
+
+Once created, the `PolicyConfigurator` can be shared across multiple builders:
+
+```csharp
+public class AnotherPolicyBuilder : PolicyBuilder<RetryPolicy, RetryPolicyConfigurator>, IPolicyBuilder<AnotherPolicyBuilder>
+{
+    protected override RetryPolicy CreatePolicy() =>
+        new RetryPolicy(2, retryDelay: ConstantRetryDelay.Create(new TimeSpan(0, 0, 1)))
+        .WithPolicyName("AnotherRetryPolicy");
+}
+```
+---
+
+## ✅ Benefits of this approach
+
+- **Single Responsibility Principle**: Each class has one clear responsibility
+- **Reusability**: Configurators can be shared across multiple policy builders
+- **Testability**: Configurators and builders can be tested independently
+- **Maintainability**: Changes to configuration logic don't affect creation logic and vice versa
+
+---
+
 ## 🏆 Samples
 
 See samples folder for concrete example. [![CSharp](https://img.shields.io/badge/C%23-code-blue.svg)](samples)

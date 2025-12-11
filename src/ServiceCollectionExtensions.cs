@@ -24,6 +24,8 @@ namespace PoliNorError.Extensions.DependencyInjection
 		{
 			services.AddAllPolicyBuilders(assemblyToScan, lifetime);
 
+			services.AddAllPolicyConfigurators(assemblyToScan, lifetime);
+
 			services.Add(new ServiceDescriptor(typeof(IPolicy<>), typeof(ProxyPolicy<>), lifetime));
 			return services;
 		}
@@ -63,12 +65,49 @@ namespace PoliNorError.Extensions.DependencyInjection
 			{
 				var serviceType = builderRegistration.InterfaceType;
 				var implementationType = builderRegistration.ImplementationType;
-
 				var descriptor = new ServiceDescriptor(serviceType!, implementationType, lifetime);
 				services.Add(descriptor);
 			}
 
 			return services;
+		}
+
+		public static IServiceCollection AddAllPolicyConfigurators(this IServiceCollection services, Assembly assemblyToScan,
+			ServiceLifetime lifetime = ServiceLifetime.Transient)
+		{
+			assemblyToScan ??= Assembly.GetExecutingAssembly();
+
+			var configuratorTypes = assemblyToScan.GetTypes()
+				.Where(t => !t.IsAbstract && !t.IsGenericTypeDefinition)
+				.Select(t => new
+				{
+					Type = t,
+					Base = GetPolicyConfiguratorBase(t)
+				})
+				.Where(x => x.Base != null);
+
+			foreach (var type in configuratorTypes.Select(entry => entry.Type))
+			{
+				var descriptor = new ServiceDescriptor(type, type, lifetime);
+				services.Add(descriptor);
+			}
+			return services;
+		}
+
+		private static Type? GetPolicyConfiguratorBase(Type? type)
+		{
+			while (type != null && type != typeof(object))
+			{
+				if (type.IsGenericType &&
+					type.GetGenericTypeDefinition() == typeof(PolicyConfigurator<>))
+				{
+					return type;
+				}
+
+				type = type.BaseType;
+			}
+
+			return null;
 		}
 	}
 }

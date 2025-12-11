@@ -200,4 +200,55 @@ namespace PoliNorError.Extensions.DependencyInjection.Tests
 			return Task.FromResult(new PolicyResult<T>());
 		}
 	}
+
+	internal class TestConfigurator : PolicyConfigurator<RetryPolicy>
+	{
+		public override void Configure(RetryPolicy policy) { }
+	}
+
+	internal class AnotherConfigurator : PolicyConfigurator<RetryPolicy>
+	{
+		public override void Configure(RetryPolicy policy) { }
+	}
+
+	internal class MultipleInterfaceConfigurator : PolicyConfigurator<RetryPolicy>
+	{
+		public override void Configure(RetryPolicy policy) { }
+	}
+
+	internal abstract class AbstractConfigurator : PolicyConfigurator<RetryPolicy>
+	{
+		public abstract void Configure2(RetryPolicy policy);
+	}
+
+#pragma warning disable S2326 // Unused type parameters should be removed
+	internal class GenericConfigurator<T> : PolicyConfigurator<RetryPolicy> where T : Policy
+#pragma warning restore S2326 // Unused type parameters should be removed
+	{
+		public override void Configure(RetryPolicy policy) { }
+	}
+
+	internal class NotAConfigurator
+	{
+#pragma warning disable S1186 // Methods should not be empty
+		public void DoSomething() { }
+#pragma warning restore S1186 // Methods should not be empty
+	}
+
+	public class FakeConfigurator : PolicyConfigurator<RetryPolicy>
+	{
+		public override void Configure(RetryPolicy policy) { policy.WithErrorProcessorOf((_) => { }); }
+	}
+
+
+	internal class SomePolicyBuilder : PolicyBuilder<RetryPolicy, FakeConfigurator>, IPolicyBuilder<SomePolicyBuilder>
+	{
+		protected override RetryPolicy CreatePolicy()
+		{
+			var policy = new RetryPolicy(1);
+			policy.WithPolicyName("SomePolicy");
+			return policy;
+		}
+		
+	}
 }

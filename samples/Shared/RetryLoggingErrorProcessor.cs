@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using PoliNorError;
 
-namespace Samples
+namespace Shared
 {
 	public class RetryLoggingErrorProcessor : ErrorProcessor
 	{

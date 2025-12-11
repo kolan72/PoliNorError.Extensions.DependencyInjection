@@ -1,8 +1,9 @@
 ﻿using PoliNorError.Extensions.DependencyInjection;
 using PoliNorError;
 using Microsoft.Extensions.Logging;
+using Shared;
 
-namespace Samples.Builders
+namespace Intro.Builders
 {
 	public class SomePolicyBuilder : IPolicyBuilder<SomePolicyBuilder>
 	{

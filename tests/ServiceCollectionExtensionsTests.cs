@@ -5,7 +5,7 @@ using System.Reflection;
 namespace PoliNorError.Extensions.DependencyInjection.Tests
 {
 	[TestFixture]
-	public class ServiceCollectionExtensionsTests
+	public partial class ServiceCollectionExtensionsTests
 	{
 		private IServiceCollection? _services;
 		private Assembly? _testAssembly;
@@ -149,7 +149,6 @@ namespace PoliNorError.Extensions.DependencyInjection.Tests
 			// Assert
 			Assert.That(result, Is.SameAs(_services));
 		}
-
 	}
 
 	[TestFixture]
@@ -219,7 +218,7 @@ namespace PoliNorError.Extensions.DependencyInjection.Tests
 				s.ServiceType.IsGenericType &&
 				s.ServiceType.GetGenericTypeDefinition() == typeof(IPolicyBuilder<>));
 
-			Assert.That(allServices.Count(), Is.EqualTo(6));
+			Assert.That(allServices.Count(), Is.EqualTo(7));
 		}
 
 		[Test]
@@ -236,6 +235,19 @@ namespace PoliNorError.Extensions.DependencyInjection.Tests
 
 			Assert.That(policyDescriptor.Lifetime, Is.EqualTo(ServiceLifetime.Scoped));
 			Assert.That(factoryDescriptors.All(d => d.Lifetime == ServiceLifetime.Scoped), Is.True);
+		}
+
+		[Test]
+		public void Should_Use_Specified_ServiceLifetime_For_PolicyBuilder_Inheritor_Registrations()
+		{
+			var services = new ServiceCollection();
+
+			services.AddPoliNorError(Assembly.GetExecutingAssembly(), ServiceLifetime.Scoped);
+
+			var factoryDescriptor = services.First(s =>
+				s.ServiceType == typeof(IPolicyBuilder<SomePolicyBuilder>));
+
+			Assert.That(factoryDescriptor.Lifetime == ServiceLifetime.Scoped, Is.True);
 		}
 
 		[Test]
