@@ -31,8 +31,16 @@ public class SomePolicyBuilder : IPolicyBuilder<SomePolicyBuilder>
 	public IPolicyBase Build()
 	{
 		return new RetryPolicy(3)
+				.WithPolicyName("SomeRetryPolicy")
 				.WithErrorProcessor(new RetryLoggingErrorProcessor(_logger))
-				.WithWait(new TimeSpan(0, 0, 3));
+				.WithWait(new TimeSpan(0, 0, 3))
+				.AddPolicyResultHandler(pr =>
+				{
+					Log.PolicyFailedToHandleException(
+						_logger,
+						pr.UnprocessedError,
+						pr.PolicyName);
+				});
 	}
 }
 ```
@@ -52,8 +60,10 @@ public class AnotherPolicyBuilder : IPolicyBuilder<AnotherPolicyBuilder>
 	public IPolicyBase Build()
 	{
 		return new RetryPolicy(2)
+			.WithPolicyName("AnotherRetryPolicy")
 			.WithErrorProcessor(new RetryLoggingErrorProcessor(_logger))
 			.WithWait(new TimeSpan(0, 0, 1));
+			.AddPolicyResultHandler(pr =>...)
 	}
 }
 ```
@@ -85,27 +95,27 @@ public class RetryLoggingErrorProcessor : ErrorProcessor
 ```csharp
 public class Worker
 {
-    private readonly IPolicy<SomePolicyBuilder> _somePolicy;
-    private readonly IPolicy<AnotherPolicyBuilder> _anotherPolicy;
+	private readonly IPolicy<SomePolicyBuilder> _somePolicy;
+	private readonly IPolicy<AnotherPolicyBuilder> _anotherPolicy;
 
-    public Worker(IPolicy<SomePolicyBuilder> somePolicy,
-                  IPolicy<AnotherPolicyBuilder> anotherPolicy)
-    {
-        _somePolicy = somePolicy;
-        _anotherPolicy = anotherPolicy;
-    }
+	public Worker(IPolicy<SomePolicyBuilder> somePolicy,
+				  IPolicy<AnotherPolicyBuilder> anotherPolicy)
+	{
+		_somePolicy = somePolicy;
+		_anotherPolicy = anotherPolicy;
+	}
 
-    public async Task DoWorkAsync(CancellationToken token)
-    {
+	public async Task DoWorkAsync(CancellationToken token)
+	{
 		await _somePolicy.HandleAsync(MightThrowAsync, token);
 		await _anotherPolicy.HandleAsync(MightThrowAsync, token);
-    }
+	}
 
-    private async Task MightThrowAsync(CancellationToken token)
-    {
-        await Task.Delay(100, token);
-        throw new SomeException("Something went wrong.");
-    }
+	private async Task MightThrowAsync(CancellationToken token)
+	{
+		await Task.Delay(100, token);
+		throw new SomeException("Something went wrong.");
+	}
 }
 ```
 
@@ -196,16 +206,26 @@ Use custom builders + configurators when:
 ```csharp
 public class RetryPolicyConfigurator : PolicyConfigurator<RetryPolicy>
 {
-    private readonly ILoggerFactory _loggerFactory;
+	private readonly ILoggerFactory _loggerFactory;
 
-    public RetryPolicyConfigurator(ILoggerFactory loggerFactory)
-    {
-        _loggerFactory = loggerFactory;
-    }
+	public RetryPolicyConfigurator(ILoggerFactory loggerFactory)
+	{
+		_loggerFactory = loggerFactory;
+	}
 
-    public override void Configure(RetryPolicy policy)
-        => policy.WithErrorProcessor(
-                new RetryLoggingErrorProcessor(_loggerFactory.CreateLogger(policy.PolicyName)));
+		public override void Configure(RetryPolicy policy)
+		{
+			var logger = _loggerFactory.CreateLogger(policy.PolicyName);
+
+			policy.WithErrorProcessor(new RetryLoggingErrorProcessor(logger))
+				.AddPolicyResultHandler(pr =>
+				{
+					Log.PolicyFailedToHandleException(
+						logger,
+						pr.UnprocessedError,
+						pr.PolicyName);
+				});
+		}
 }
 ```
 This configurator:
@@ -217,9 +237,9 @@ This configurator:
 ```csharp
 public class SomePolicyBuilder : PolicyBuilder<RetryPolicy, RetryPolicyConfigurator>, IPolicyBuilder<SomePolicyBuilder>
 {
-    protected override RetryPolicy CreatePolicy() =>
-        new RetryPolicy(3, retryDelay: ConstantRetryDelay.Create(new TimeSpan(0, 0, 3)))
-        .WithPolicyName("SomeRetryPolicy");
+	protected override RetryPolicy CreatePolicy() =>
+		new RetryPolicy(3, retryDelay: ConstantRetryDelay.Create(new TimeSpan(0, 0, 3)))
+		.WithPolicyName("SomeRetryPolicy");
 }
 ```
 This builder:
@@ -233,9 +253,9 @@ Once created, the configurator (a subclass of `PolicyConfigurator`) can be share
 ```csharp
 public class AnotherPolicyBuilder : PolicyBuilder<RetryPolicy, RetryPolicyConfigurator>, IPolicyBuilder<AnotherPolicyBuilder>
 {
-    protected override RetryPolicy CreatePolicy() =>
-        new RetryPolicy(2, retryDelay: ConstantRetryDelay.Create(new TimeSpan(0, 0, 1)))
-        .WithPolicyName("AnotherRetryPolicy");
+	protected override RetryPolicy CreatePolicy() =>
+		new RetryPolicy(2, retryDelay: ConstantRetryDelay.Create(new TimeSpan(0, 0, 1)))
+		.WithPolicyName("AnotherRetryPolicy");
 }
 ```
 ---
