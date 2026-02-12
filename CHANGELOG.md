@@ -1,3 +1,14 @@
+## 0.0.3
+
+- Introduce abstract classes `PolicyConfigurator<TPolicy>` and `PolicyBuilder<TPolicy, TConfigurator>`.
+- Update Microsoft nuget packages.
+- Add *Advanced Usage* section to README.
+- Move the `RetryLoggingErrorProcessor` to `Shared.csproj`.
+- Add `ConfiguratorDemo.csproj` to `Samples.sln`.
+- Create `Shared.csproj` in Samples and move `SomeException` into it.
+- Move `Samples.csproj` into a new `Intro` folder and rename it to `Intro.csproj
+
+
 ## 0.0.3-preview
 
 - Fix `ServiceCollectionExtensions` xml docs.
