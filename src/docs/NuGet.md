@@ -62,8 +62,8 @@ public class AnotherPolicyBuilder : IPolicyBuilder<AnotherPolicyBuilder>
 		return new RetryPolicy(2)
 			.WithPolicyName("AnotherRetryPolicy")
 			.WithErrorProcessor(new RetryLoggingErrorProcessor(_logger))
-			.WithWait(new TimeSpan(0, 0, 1));
-			.AddPolicyResultHandler(pr =>...)
+			.WithWait(new TimeSpan(0, 0, 1))
+			.AddPolicyResultHandler(pr =>...);
 	}
 }
 ```
