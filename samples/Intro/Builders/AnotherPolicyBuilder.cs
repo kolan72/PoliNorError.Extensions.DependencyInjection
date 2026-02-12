@@ -17,8 +17,16 @@ namespace Intro.Builders
 		public IPolicyBase Build()
 		{
 			return new RetryPolicy(2)
+				.WithPolicyName("AnotherRetryPolicy")
 				.WithErrorProcessor(new RetryLoggingErrorProcessor(_logger))
-				.WithWait(new TimeSpan(0, 0, 1));
+				.WithWait(new TimeSpan(0, 0, 1))
+				.AddPolicyResultHandler(pr =>
+				{
+					Log.PolicyFailedToHandleException(
+						_logger,
+						pr.UnprocessedError,
+						pr.PolicyName);
+				});
 		}
 	}
 }
