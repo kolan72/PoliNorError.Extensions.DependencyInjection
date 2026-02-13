@@ -1,7 +1,7 @@
 ﻿using ConfiguratorDemo.Builders;
+using PoliNorError;
 using PoliNorError.Extensions.DependencyInjection;
 using Shared;
-using PoliNorError;
 
 namespace ConfiguratorDemo
 {
@@ -18,8 +18,11 @@ namespace ConfiguratorDemo
 
 		public async Task DoWorkAsync(CancellationToken token)
 		{
-			await _somePolicy.HandleAsync(MightThrowAsync, token);
-			await _anotherPolicy.HandleAsync(MightThrowAsync, token);
+			var somePolicyResult = await _somePolicy.HandleAsync(MightThrowAsync, token).ConfigureAwait(false);
+			if (somePolicyResult.IsFailed)
+			{
+				await _anotherPolicy.HandleAsync(MightThrowAsync, token).ConfigureAwait(false);
+			}
 		}
 
 		private async Task MightThrowAsync(CancellationToken token)

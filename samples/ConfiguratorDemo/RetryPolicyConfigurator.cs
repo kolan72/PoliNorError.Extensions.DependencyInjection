@@ -14,8 +14,19 @@ namespace ConfiguratorDemo
 			_loggerFactory = loggerFactory;
 		}
 
-        public override void Configure(RetryPolicy policy)
-			=> policy.WithErrorProcessor(
-					new RetryLoggingErrorProcessor(_loggerFactory.CreateLogger(policy.PolicyName)));
+		public override void Configure(RetryPolicy policy)
+		{
+			var logger = _loggerFactory.CreateLogger(policy.PolicyName);
+
+			policy.WithErrorProcessor(
+							new RetryLoggingErrorProcessor(logger))
+				.AddPolicyResultHandler(pr =>
+				{
+					Log.PolicyFailedToHandleException(
+						logger,
+						pr.UnprocessedError,
+						pr.PolicyName);
+				});
+		}
 	}
 }
