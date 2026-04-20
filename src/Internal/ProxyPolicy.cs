@@ -27,19 +27,5 @@
 
 		public Task<PolicyResult<T>> HandleAsync<T>(Func<CancellationToken, Task<T>> func, bool configureAwait = false, CancellationToken token = default)
 			=> _innerPolicy.HandleAsync(func, configureAwait, token);
-
-		private static bool IsSubclassOfGenericDefinition(Type? candidate, Type genericBase)
-		{
-			while (candidate != null && candidate != typeof(object))
-			{
-				var current = candidate.IsGenericType ? candidate.GetGenericTypeDefinition() : candidate;
-				if (current == genericBase)
-					return true;
-
-				candidate = candidate.BaseType;
-			}
-
-			return false;
-		}
 	}
 }
