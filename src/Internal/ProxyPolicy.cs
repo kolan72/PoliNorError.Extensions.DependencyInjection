@@ -6,15 +6,12 @@
 
 		public ProxyPolicy(IPolicyBuilder<TBuilder> factory, IServiceProvider serviceProvider)
 		{
-			if (IsSubclassOfGenericDefinition(factory.GetType(), typeof(PolicyBuilder<,>)))
+			if (factory is ISetConfigurator configurable)
 			{
-				((ISetConfigurator)factory).SetConfigurator(serviceProvider);
-				_innerPolicy = factory.Build();
+				configurable.SetConfigurator(serviceProvider);
 			}
-			else
-			{
-				_innerPolicy = factory.Build();
-			}
+
+			_innerPolicy = factory.Build();
 		}
 
 		public string PolicyName => _innerPolicy.PolicyName;
