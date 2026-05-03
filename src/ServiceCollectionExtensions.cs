@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Reflection;
 
 namespace PoliNorError.Extensions.DependencyInjection
@@ -18,15 +19,60 @@ namespace PoliNorError.Extensions.DependencyInjection
 		/// <param name="lifetime">The <see cref="ServiceLifetime"/> to use for registration of all PoliNorError services. Defaults to <see cref="ServiceLifetime.Transient"/>.</param>
 		/// <returns>The <see cref="IServiceCollection"/> for method chaining.</returns>
 		public static IServiceCollection AddPoliNorError(
-		this IServiceCollection services,
-			Assembly assemblyToScan,
+			this IServiceCollection services,
+			Assembly? assemblyToScan,
 			ServiceLifetime lifetime = ServiceLifetime.Transient)
 		{
-			services.AddAllPolicyBuilders(assemblyToScan, lifetime);
+			// Normalize null once at the public boundary; internal methods keep their own fallback.
+			assemblyToScan ??= Assembly.GetCallingAssembly();
 
+			services.AddAllPolicyBuilders(assemblyToScan, lifetime);
 			services.AddAllPolicyConfigurators(assemblyToScan, lifetime);
 
-			services.Add(new ServiceDescriptor(typeof(IPolicy<>), typeof(ProxyPolicy<>), lifetime));
+			// TryAdd is a no-op when IPolicy<> is already registered, preventing duplicates.
+			services.TryAdd(new ServiceDescriptor(typeof(IPolicy<>), typeof(ProxyPolicy<>), lifetime));
+			return services;
+		}
+
+		/// <summary>
+		/// Adds PoliNorError core services to the specified <see cref="IServiceCollection"/>,
+		/// scanning one or more assemblies for <see cref="IPolicyBuilder{TBuilder}"/> implementations
+		/// and <see cref="PolicyConfigurator{TPolicy}"/> subclasses.
+		/// </summary>
+		/// <remarks>
+		/// <para>
+		/// When called with multiple assemblies, each assembly is scanned independently and all
+		/// discovered types are registered. The open-generic <c>IPolicy&lt;&gt;</c> mapping is
+		/// registered exactly once regardless of how many assemblies are provided.
+		/// </para>
+		/// <para>
+		/// Note: <paramref name="lifetime"/> precedes <paramref name="assembliesToScan"/> to avoid
+		/// ambiguity with the single-assembly overload <see cref="AddPoliNorError(IServiceCollection, Assembly, ServiceLifetime)"/>.
+		/// </para>
+		/// </remarks>
+		/// <param name="services">The <see cref="IServiceCollection"/> to add the services to.</param>
+		/// <param name="lifetime">The <see cref="ServiceLifetime"/> to use for all registrations. Defaults to <see cref="ServiceLifetime.Transient"/>.</param>
+		/// <param name="assembliesToScan">
+		/// One or more assemblies to scan. If empty, the calling assembly is used.
+		/// </param>
+		/// <returns>The <see cref="IServiceCollection"/> for method chaining.</returns>
+		public static IServiceCollection AddPoliNorError(
+			this IServiceCollection services,
+			ServiceLifetime lifetime = ServiceLifetime.Transient,
+			params Assembly[] assembliesToScan)
+		{
+			// Fall back to the calling assembly when no assemblies are provided.
+			if (assembliesToScan.Length == 0)
+				assembliesToScan = [Assembly.GetCallingAssembly()];
+
+			foreach (var assembly in assembliesToScan)
+			{
+				services.AddAllPolicyBuilders(assembly, lifetime);
+				services.AddAllPolicyConfigurators(assembly, lifetime);
+			}
+
+			// Register IPolicy<> exactly once regardless of how many assemblies were scanned.
+			services.TryAdd(new ServiceDescriptor(typeof(IPolicy<>), typeof(ProxyPolicy<>), lifetime));
 			return services;
 		}
 
@@ -55,8 +101,8 @@ namespace PoliNorError.Extensions.DependencyInjection
 				.Select(t => new
 				{
 					ImplementationType = t,
-					InterfaceType = Array.Find(t.GetInterfaces(),
-											i => i.IsGenericType && i.GetGenericTypeDefinition() == openGenericInterface)
+					InterfaceType = t.GetInterfaces()
+						.FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == openGenericInterface)
 				})
 				.Where(x => x.InterfaceType != null);
 
@@ -72,21 +118,24 @@ namespace PoliNorError.Extensions.DependencyInjection
 			return services;
 		}
 
-		public static IServiceCollection AddAllPolicyConfigurators(this IServiceCollection services, Assembly assemblyToScan,
+		/// <summary>
+		/// Scans the specified assembly (or the assembly containing the extension method if <see langword="null"/>)
+		/// and registers all concrete classes that inherit from <see cref="PolicyConfigurator{TPolicy}"/>
+		/// as self-mapped services.
+		/// </summary>
+		/// <param name="services">The <see cref="IServiceCollection"/> to add the services to.</param>
+		/// <param name="assemblyToScan">The assembly to scan for types. If <see langword="null"/>, the assembly containing this extension method is used.</param>
+		/// <param name="lifetime">The <see cref="ServiceLifetime"/> to use for registration. Defaults to <see cref="ServiceLifetime.Transient"/>.</param>
+		/// <returns>The <see cref="IServiceCollection"/> for method chaining.</returns>
+		internal static IServiceCollection AddAllPolicyConfigurators(this IServiceCollection services, Assembly assemblyToScan,
 			ServiceLifetime lifetime = ServiceLifetime.Transient)
 		{
 			assemblyToScan ??= Assembly.GetExecutingAssembly();
 
 			var configuratorTypes = assemblyToScan.GetTypes()
-				.Where(t => !t.IsAbstract && !t.IsGenericTypeDefinition)
-				.Select(t => new
-				{
-					Type = t,
-					Base = GetPolicyConfiguratorBase(t)
-				})
-				.Where(x => x.Base != null);
+				.Where(t => !t.IsAbstract && !t.IsGenericTypeDefinition && InheritsFromPolicyConfigurator(t));
 
-			foreach (var type in configuratorTypes.Select(entry => entry.Type))
+			foreach (var type in configuratorTypes)
 			{
 				var descriptor = new ServiceDescriptor(type, type, lifetime);
 				services.Add(descriptor);
@@ -94,20 +143,20 @@ namespace PoliNorError.Extensions.DependencyInjection
 			return services;
 		}
 
-		private static Type? GetPolicyConfiguratorBase(Type? type)
+		private static bool InheritsFromPolicyConfigurator(Type? type)
 		{
 			while (type != null && type != typeof(object))
 			{
 				if (type.IsGenericType &&
 					type.GetGenericTypeDefinition() == typeof(PolicyConfigurator<>))
 				{
-					return type;
+					return true;
 				}
 
 				type = type.BaseType;
 			}
 
-			return null;
+			return false;
 		}
 	}
 }
