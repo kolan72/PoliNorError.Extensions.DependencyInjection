@@ -241,14 +241,13 @@ namespace PoliNorError.Extensions.DependencyInjection.Tests
 	}
 
 
-	internal class SomePolicyBuilder : PolicyBuilder<RetryPolicy, FakeConfigurator>, IPolicyBuilder<SomePolicyBuilder>
+	internal class SomePolicyBuilder : PolicyBuilder<RetryPolicy, FakeConfigurator, SomePolicyBuilder>
 	{
 		protected override RetryPolicy CreatePolicy()
 		{
 			var policy = new RetryPolicy(1);
 			policy.WithPolicyName("SomePolicy");
 			return policy;
-		}
-		
+		}		
 	}
 }

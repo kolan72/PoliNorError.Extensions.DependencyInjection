@@ -218,7 +218,7 @@ namespace PoliNorError.Extensions.DependencyInjection.Tests
 				s.ServiceType.IsGenericType &&
 				s.ServiceType.GetGenericTypeDefinition() == typeof(IPolicyBuilder<>));
 
-			Assert.That(allServices.Count(), Is.EqualTo(7));
+			Assert.That(allServices.Count(), Is.EqualTo(8));
 		}
 
 		[Test]
