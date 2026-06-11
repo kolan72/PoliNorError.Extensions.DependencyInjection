@@ -1,3 +1,15 @@
+## 0.0.3.2
+
+- Update lib and samples to PoliNorError 2.24.20.
+- Update Microsoft NuGet packages for the library, tests, and Samples.
+- Update tests to NUnit3TestAdapter 6.1.0.
+- Samples: use conditional exception handling via `PolicyResult.IsFailed` for two policies in ConfiguratorDemo.
+- Samples: add `PolicyResult` handler that logs `UnprocessedError` along with policy name in ConfiguratorDemo.
+- Samples: add `PolicyResult` handler that logs `UnprocessedError` along with policy name in Intro.
+- Update NuGet.md.
+- Update README.md.
+
+
 ## 0.0.3
 
 - Introduce abstract classes `PolicyConfigurator<TPolicy>` and `PolicyBuilder<TPolicy, TConfigurator>`.
