@@ -3,7 +3,7 @@ using PoliNorError;
 
 namespace ConfiguratorDemo.Builders
 {
-	public class AnotherPolicyBuilder : PolicyBuilder<RetryPolicy, RetryPolicyConfigurator>, IPolicyBuilder<AnotherPolicyBuilder>
+	public class AnotherPolicyBuilder : PolicyBuilder<RetryPolicy, RetryPolicyConfigurator, AnotherPolicyBuilder>
 	{
 		protected override RetryPolicy CreatePolicy() =>
 			new RetryPolicy(2, retryDelay: ConstantRetryDelay.Create(new TimeSpan(0, 0, 1)))

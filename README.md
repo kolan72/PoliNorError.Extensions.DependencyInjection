@@ -178,7 +178,7 @@ For more complex scenarios, `PoliNorError.Extensions.DependencyInjectio`n suppor
 ### Key Concepts:
 
 - `PolicyConfigurator<TPolicy>` — an abstract base class for encapsulating cross‑cutting configuration logic (logging, enrichment, etc.).
-- `PolicyBuilder<TPolicy, TConfigurator>` — an abstract base class that encapsulates policy creation and optional configurator wiring.
+- `PolicyBuilder<TPolicy, TConfigurator, TBuilder>` — an abstract base class that encapsulates policy creation and optional configurator wiring.
 
 ---
 
@@ -189,9 +189,9 @@ Inheritors of `PolicyConfigurator` are automatically resolved from DI.
 
 ---
 
-### ✅ Inheriting from PolicyBuilder<TPolicy, TConfigurator>
+### ✅ Inheriting from PolicyBuilder<TPolicy, TConfigurator, TBuilder>
 
-Create a subclass of `PolicyBuilder<TPolicy, TConfigurator>` and override the `CreatePolicy` method, where `TPolicy` is a policy from [PoliNorError](https://github.com/kolan72/PoliNorError) library, and `TConfigurator` inherits from `PolicyConfigurator<TPolicy>`.
+Create a subclass of `PolicyBuilder<TPolicy, TConfigurator, TBuilder>` and override the `CreatePolicy` method, where `TPolicy` is a policy from [PoliNorError](https://github.com/kolan72/PoliNorError) library, and `TConfigurator` inherits from `PolicyConfigurator<TPolicy>`. `TBuilder` is the concrete builder type itself (self-referential CRTP parameter).
 
 ---
 
@@ -239,7 +239,7 @@ This configurator:
 - Uses the policy name to create a dedicated logger
 
 ```csharp
-public class SomePolicyBuilder : PolicyBuilder<RetryPolicy, RetryPolicyConfigurator>, IPolicyBuilder<SomePolicyBuilder>
+public class SomePolicyBuilder : PolicyBuilder<RetryPolicy, RetryPolicyConfigurator, SomePolicyBuilder>
 {
 	protected override RetryPolicy CreatePolicy() =>
 		new RetryPolicy(3, retryDelay: ConstantRetryDelay.Create(new TimeSpan(0, 0, 3)))
@@ -255,7 +255,7 @@ This builder:
 Once created, the configurator (a subclass of `PolicyConfigurator`) can be shared across multiple builders:
 
 ```csharp
-public class AnotherPolicyBuilder : PolicyBuilder<RetryPolicy, RetryPolicyConfigurator>, IPolicyBuilder<AnotherPolicyBuilder>
+public class AnotherPolicyBuilder : PolicyBuilder<RetryPolicy, RetryPolicyConfigurator, AnotherPolicyBuilder>
 {
 	protected override RetryPolicy CreatePolicy() =>
 		new RetryPolicy(2, retryDelay: ConstantRetryDelay.Create(new TimeSpan(0, 0, 1)))
