@@ -34,10 +34,12 @@ namespace PoliNorError.Extensions.DependencyInjection
 		public IPolicyBase Build()
 		{
 			if (_configurator is null)
+			{
 				throw new InvalidOperationException(
 					$"{GetType().Name} requires a configurator. " +
 					$"Ensure {GetType().Name} is registered via AddPoliNorError so that " +
-					$"SetConfigurator is called before Build().");
+					"SetConfigurator is called before Build().");
+			}
 
 			var result = CreatePolicy();
 			_configurator.Configure(result);
