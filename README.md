@@ -147,6 +147,12 @@ public class Worker
 - **Automatic DI Registration**  
   - `AddPoliNorError()` scans assemblies for all `IPolicyBuilder<>` implementations.  
   - Registers them and wires up `IPolicy<T>` → `ProxyPolicy<T>` automatically.  
+  - Also scans for all concrete classes inheriting from `PolicyBase` for use with `IPolicyFactory`.
+
+- **IPolicyFactory**  
+  - Factory interface for creating policy instances dynamically at runtime.
+  - Works with classes that inherit from `PolicyBase`.
+  - Enables runtime policy selection based on application logic.
 
 ---
 
@@ -170,6 +176,96 @@ public class Worker
 
 ---
 
+
+## 🔥 Advanced Usage: Dynamic Policy Creation with IPolicyFactory
+
+For scenarios where you need to create policies dynamically at runtime, `PoliNorError.Extensions.DependencyInjection` provides the `IPolicyFactory` interface and `PolicyBase` abstract class.
+
+### Key Concepts:
+
+- `PolicyBase` — an abstract base class for creating self-contained policy implementations.
+- `IPolicyFactory` — a factory interface for dynamically creating policy instances at runtime.
+
+---
+
+### ✅ Inheriting from PolicyBase
+
+Create a subclass of `PolicyBase` and override the `CreatePolicy` method to define your policy configuration:
+
+```csharp
+public class QuickRetryPolicy : PolicyBase
+{
+	private readonly ILogger<QuickRetryPolicy> _logger;
+
+	public QuickRetryPolicy(ILogger<QuickRetryPolicy> logger)
+	{
+		_logger = logger;
+	}
+
+	protected override IPolicyBase CreatePolicy()
+	{
+		return new RetryPolicy(2)
+			.WithPolicyName("QuickRetryPolicy")
+			.WithErrorProcessor(new RetryLoggingErrorProcessor(_logger))
+			.WithWait(TimeSpan.FromSeconds(1));
+	}
+}
+```
+
+---
+
+### ✅ Using IPolicyFactory
+
+Inject `IPolicyFactory` into your services to create policies dynamically:
+
+```csharp
+public class Worker
+{
+	private readonly IPolicyFactory _policyFactory;
+
+	public Worker(IPolicyFactory policyFactory)
+	{
+		_policyFactory = policyFactory;
+	}
+
+	public async Task DoWorkAsync(CancellationToken token)
+	{
+		// Create policies dynamically as needed
+		var quickRetryPolicy = _policyFactory.CreatePolicy<QuickRetryPolicy>();
+		var slowRetryPolicy = _policyFactory.CreatePolicy<SlowRetryPolicy>();
+
+		await quickRetryPolicy.HandleAsync(SomeOperationAsync, token);
+		await slowRetryPolicy.HandleAsync(AnotherOperationAsync, token);
+	}
+}
+```
+
+The `AddPoliNorError()` method automatically:
+- Scans for all concrete classes inheriting from `PolicyBase`
+- Registers them in DI
+- Makes them available through `IPolicyFactory`
+
+---
+
+### ✅ When to Use This Pattern
+
+Use `PolicyBase` + `IPolicyFactory` when:
+
+- You need to create policies **dynamically** at runtime.
+- The specific policy to use is determined by **runtime conditions**.
+- You want to avoid injecting multiple `IPolicy<T>` dependencies.
+- You need **on-demand** policy instantiation rather than upfront configuration.
+
+---
+
+### ✅ Benefits of IPolicyFactory Approach
+
+- **Dynamic Creation**: Create policies on-demand based on runtime conditions
+- **Reduced Dependencies**: Single factory injection instead of multiple policy injections
+- **Flexibility**: Choose which policy to use at runtime
+- **Encapsulation**: Each PolicyBase subclass is self-contained and independently configurable
+
+---
 
 ## 🔥 Advanced Usage: Separation of Concerns with Configurators and Builders
 
