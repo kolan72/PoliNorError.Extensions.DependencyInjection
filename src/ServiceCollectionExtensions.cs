@@ -28,9 +28,11 @@ namespace PoliNorError.Extensions.DependencyInjection
 
 			services.AddAllPolicyBuilders(assemblyToScan, lifetime);
 			services.AddAllPolicyConfigurators(assemblyToScan, lifetime);
+			services.AddAllPolicies(assemblyToScan, lifetime);
 
 			// TryAdd is a no-op when IPolicy<> is already registered, preventing duplicates.
 			services.TryAdd(new ServiceDescriptor(typeof(IPolicy<>), typeof(ProxyPolicy<>), lifetime));
+			services.TryAddSingleton<IPolicyFactory, PolicyFactory>();
 			return services;
 		}
 
@@ -69,10 +71,12 @@ namespace PoliNorError.Extensions.DependencyInjection
 			{
 				services.AddAllPolicyBuilders(assembly, lifetime);
 				services.AddAllPolicyConfigurators(assembly, lifetime);
+				services.AddAllPolicies(assembly, lifetime);
 			}
 
 			// Register IPolicy<> exactly once regardless of how many assemblies were scanned.
 			services.TryAdd(new ServiceDescriptor(typeof(IPolicy<>), typeof(ProxyPolicy<>), lifetime));
+			services.TryAddSingleton<IPolicyFactory, PolicyFactory>();
 			return services;
 		}
 
@@ -143,12 +147,52 @@ namespace PoliNorError.Extensions.DependencyInjection
 			return services;
 		}
 
+		/// <summary>
+		/// Scans the specified assembly (or the assembly containing the extension method if <see langword="null"/>)
+		/// and registers all concrete classes that inherit from <see cref="PolicyBase"/>
+		/// as self-mapped services.
+		/// </summary>
+		/// <param name="services">The <see cref="IServiceCollection"/> to add the services to.</param>
+		/// <param name="assemblyToScan">The assembly to scan for types. If <see langword="null"/>, the assembly containing this extension method is used.</param>
+		/// <param name="lifetime">The <see cref="ServiceLifetime"/> to use for registration. Defaults to <see cref="ServiceLifetime.Transient"/>.</param>
+		/// <returns>The <see cref="IServiceCollection"/> for method chaining.</returns>
+		internal static IServiceCollection AddAllPolicies(this IServiceCollection services, Assembly assemblyToScan,
+			ServiceLifetime lifetime = ServiceLifetime.Transient)
+		{
+			assemblyToScan ??= Assembly.GetExecutingAssembly();
+
+			var policyTypes = assemblyToScan.GetTypes()
+				.Where(t => t.IsClass && !t.IsAbstract && InheritsFromPolicyBase(t));
+
+			foreach (var type in policyTypes)
+			{
+				var descriptor = new ServiceDescriptor(type, type, lifetime);
+				services.Add(descriptor);
+			}
+			return services;
+		}
+
 		private static bool InheritsFromPolicyConfigurator(Type? type)
 		{
 			while (type != null && type != typeof(object))
 			{
 				if (type.IsGenericType &&
 					type.GetGenericTypeDefinition() == typeof(PolicyConfigurator<>))
+				{
+					return true;
+				}
+
+				type = type.BaseType;
+			}
+
+			return false;
+		}
+
+		private static bool InheritsFromPolicyBase(Type? type)
+		{
+			while (type != null && type != typeof(object))
+			{
+				if (type == typeof(PolicyBase))
 				{
 					return true;
 				}

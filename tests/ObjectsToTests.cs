@@ -48,13 +48,15 @@ namespace PoliNorError.Extensions.DependencyInjection.Tests
 		public PolicyResult<T> Handle<T>(Func<T> func, CancellationToken token = default)
 		{
 			HandleFuncCalled = true;
+			func();
 			return new PolicyResult<T>();
 		}
 
-		public Task<PolicyResult> HandleAsync(Func<CancellationToken, Task> func, bool configureAwait = false, CancellationToken token = default)
+		public async Task<PolicyResult> HandleAsync(Func<CancellationToken, Task> func, bool configureAwait = false, CancellationToken token = default)
 		{
 			HandleAsyncActionCalled = true;
-			return Task.FromResult(new PolicyResult());
+			await func(token);
+			return new PolicyResult();
 		}
 
 		public Task<PolicyResult<T>> HandleAsync<T>(Func<CancellationToken, Task<T>> func, bool configureAwait = false, CancellationToken token = default)
@@ -249,5 +251,33 @@ namespace PoliNorError.Extensions.DependencyInjection.Tests
 			policy.WithPolicyName("SomePolicy");
 			return policy;
 		}		
+	}
+
+	// Test classes for PolicyBase and PolicyFactory
+	public class TestPolicyDerived : PolicyBase
+	{
+		public bool IsCreated { get; private set; }
+
+		protected override IPolicyBase CreateInner()
+		{
+			IsCreated = true;
+			return new TestPolicy("TestPolicyDerived");
+		}
+	}
+
+	public class AnotherTestPolicyDerived : PolicyBase
+	{
+		public bool IsCreated { get; private set; }
+
+		protected override IPolicyBase CreateInner()
+		{
+			IsCreated = true;
+			return new TestPolicy("AnotherTestPolicyDerived");
+		}
+	}
+
+	public abstract class AbstractTestPolicy : PolicyBase
+	{
+		// Abstract class that should not be registered
 	}
 }
