@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 using PoliNorError.Extensions.DependencyInjection;
 using System.Reflection;
+using Shared;
 
 namespace Intro
 {
@@ -27,6 +28,9 @@ namespace Intro
 				})
 
 				.AddTransient<Worker>()
+
+				// Register RetryLoggingErrorProcessor as Transient
+				.AddTransient(typeof(RetryLoggingErrorProcessor<>))
 
 				// Register all IPolicyBuilder<T> implementations from the current assembly
 				.AddPoliNorError(Assembly.GetExecutingAssembly())

@@ -9,17 +9,20 @@ namespace Intro
 	{
 		private readonly IPolicy<SomePolicyBuilder> _somePolicy;
 		private readonly IPolicy<AnotherPolicyBuilder> _anotherPolicy;
+		private readonly IPolicy<LoggingPolicyBuilder> _loggingPolicy;
 
-		public Worker(IPolicy<SomePolicyBuilder> somePolicy, IPolicy<AnotherPolicyBuilder> anotherPolicy)
+		public Worker(IPolicy<SomePolicyBuilder> somePolicy, IPolicy<AnotherPolicyBuilder> anotherPolicy, IPolicy<LoggingPolicyBuilder> loggingPolicy)
 		{
 			_somePolicy = somePolicy;
 			_anotherPolicy = anotherPolicy;
+			_loggingPolicy = loggingPolicy;
 		}
 
 		public async Task DoWorkAsync(CancellationToken token)
 		{
 			await _somePolicy.HandleAsync(MightThrowAsync, token);
 			await _anotherPolicy.HandleAsync(MightThrowAsync, token);
+			await _loggingPolicy.HandleAsync(MightThrowAsync, token);
 		}
 
 		private async Task MightThrowAsync(CancellationToken token)

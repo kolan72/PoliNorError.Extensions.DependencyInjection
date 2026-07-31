@@ -11,4 +11,8 @@
     <PackageReference Include="PoliNorError" Version="2.24.30" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\PoliNorError.Extensions.DependencyInjection.csproj" />
+  </ItemGroup>
+
 </Project>
