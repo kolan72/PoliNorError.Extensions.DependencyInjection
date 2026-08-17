@@ -113,6 +113,23 @@ namespace PoliNorError.Extensions.DependencyInjection
 				var implementationType = builderRegistration.ImplementationType;
 				var descriptor = new ServiceDescriptor(serviceType!, implementationType, lifetime);
 				services.Add(descriptor);
+
+				// Register the corresponding ProxyPolicy<> as a keyed IPolicyBase for type-based resolution.
+				var proxyType = typeof(ProxyPolicy<>).MakeGenericType(implementationType);
+
+				switch (lifetime)
+				{
+					case ServiceLifetime.Singleton:
+						services.AddKeyedSingleton(typeof(IPolicyBase), implementationType, proxyType);
+						break;
+					case ServiceLifetime.Scoped:
+						services.AddKeyedScoped(typeof(IPolicyBase), implementationType, proxyType);
+						break;
+					case ServiceLifetime.Transient:
+					default:
+						services.AddKeyedTransient(typeof(IPolicyBase), implementationType, proxyType);
+						break;
+				}
 			}
 
 			return services;
@@ -157,6 +174,39 @@ namespace PoliNorError.Extensions.DependencyInjection
 			}
 
 			return false;
+		}
+
+		/// <summary>
+		/// Resolves a keyed <see cref="IPolicyBase"/> from the specified <see cref="IServiceProvider"/>.
+		/// </summary>
+		/// <param name="serviceProvider">The <see cref="IServiceProvider"/> to resolve the policy from.</param>
+		/// <param name="key">The key of the policy to resolve.</param>
+		/// <returns>The resolved <see cref="IPolicyBase"/>, or <see langword="null"/> if not found.</returns>
+		public static IPolicyBase? GetKeyedPolicy(this IServiceProvider serviceProvider, object key)
+		{
+			return serviceProvider.GetKeyedService<IPolicyBase>(key);
+		}
+
+		/// <summary>
+		/// Resolves a keyed <see cref="IPolicyBase"/> from the specified <see cref="IServiceProvider"/>.
+		/// </summary>
+		/// <param name="serviceProvider">The <see cref="IServiceProvider"/> to resolve the policy from.</param>
+		/// <param name="key">The key of the policy to resolve.</param>
+		/// <returns>The resolved <see cref="IPolicyBase"/>.</returns>
+		/// <exception cref="InvalidOperationException">Thrown when the keyed policy is not registered.</exception>
+		public static IPolicyBase GetRequiredKeyedPolicy(this IServiceProvider serviceProvider, object key)
+		{
+			return serviceProvider.GetRequiredKeyedService<IPolicyBase>(key);
+		}
+
+		/// <summary>
+		/// Resolves all keyed <see cref="IPolicyBase"/> services from the specified <see cref="IServiceProvider"/>.
+		/// </summary>
+		/// <param name="serviceProvider">The <see cref="IServiceProvider"/> to resolve the policies from.</param>
+		/// <returns>An enumerable of all registered keyed <see cref="IPolicyBase"/> services.</returns>
+		public static IEnumerable<IPolicyBase> GetKeyedPolicies(this IServiceProvider serviceProvider)
+		{
+			return serviceProvider.GetKeyedServices<IPolicyBase>(null);
 		}
 	}
 }

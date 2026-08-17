@@ -149,6 +149,36 @@ namespace PoliNorError.Extensions.DependencyInjection.Tests
 			// Assert
 			Assert.That(result, Is.SameAs(_services));
 		}
+
+		[Test]
+		public void Should_Resolve_Keyed_Policy_By_Implementation_Type()
+		{
+			// Arrange
+			_services!.AddAllPolicyBuilders(assemblyToScan: _testAssembly!);
+			var provider = _services!.BuildServiceProvider();
+
+			// Act
+			var policy = provider.GetKeyedService<IPolicyBase>(typeof(TestPolicyBuilderA));
+
+			// Assert
+			Assert.That(policy, Is.Not.Null);
+			Assert.That(policy!.PolicyName, Is.EqualTo("TestPolicyA"));
+		}
+
+
+
+		[Test]
+		public void Should_Not_Register_Keyed_IPolicyBase_For_Abstract_Classes()
+		{
+			// Act
+			_services!.AddAllPolicyBuilders(assemblyToScan: _testAssembly!);
+
+			// Assert
+			var keyedDescriptors = _services!.Where(s => s.IsKeyedService && s.ServiceType == typeof(IPolicyBase)).ToList();
+			var implementationTypes = keyedDescriptors.Select(d => d.ImplementationType!).ToList();
+
+			Assert.That(implementationTypes.Any(t => t == typeof(AbstractPolicyBuilder)), Is.False);
+		}
 	}
 
 	[TestFixture]

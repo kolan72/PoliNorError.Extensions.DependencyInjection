@@ -147,5 +147,88 @@ namespace PoliNorError.Extensions.DependencyInjection.Tests
 			Assert.That(policyB.PolicyName, Is.EqualTo("TestPolicyB"));
 			Assert.That(policyA, Is.Not.SameAs(policyB));
 		}
+
+		[Test]
+		public void Should_Resolve_Keyed_Policy_By_Builder_Type()
+		{
+			// Act
+			var key = typeof(TestPolicyBuilderA);
+			var policy = _serviceProvider!.GetKeyedPolicy(key);
+
+			// Assert
+			Assert.That(policy, Is.Not.Null);
+			Assert.That(policy!.PolicyName, Is.EqualTo("TestPolicyA"));
+		}
+
+		[Test]
+		public void Should_Resolve_Required_Keyed_Policy()
+		{
+			// Act
+			var key = typeof(TestPolicyBuilderB);
+			var policy = _serviceProvider!.GetRequiredKeyedPolicy(key);
+
+			// Assert
+			Assert.That(policy, Is.Not.Null);
+			Assert.That(policy.PolicyName, Is.EqualTo("TestPolicyB"));
+		}
+
+		[Test]
+		public void Should_Return_Null_For_Nonexistent_Keyed_Policy()
+		{
+			// Act
+			var policy = _serviceProvider!.GetKeyedPolicy(typeof(object));
+
+			// Assert
+			Assert.That(policy, Is.Null);
+		}
+
+		[Test]
+		public void Should_WorkEndToEnd_With_Keyed_Policy()
+		{
+			// Arrange
+			var key = typeof(TestPolicyBuilderA);
+			var policy = _serviceProvider!.GetRequiredKeyedPolicy(key);
+			var testValue = "keyed integration test";
+
+			// Act
+			var result = policy.Handle(() => testValue);
+
+			// Assert
+			Assert.That(result.IsSuccess, Is.True);
+		}
+
+		[Test]
+		public async Task Should_WorkEndToEnd_With_Async_Keyed_Policy()
+		{
+			// Arrange
+			var key = typeof(TestPolicyBuilderA);
+			var policy = _serviceProvider!.GetRequiredKeyedPolicy(key);
+			var testValue = "async keyed integration test";
+
+			// Act
+			var result = await policy.HandleAsync(async (token) =>
+			{
+				await Task.Delay(10, token);
+				return testValue;
+			});
+
+			// Assert
+			Assert.That(result.IsSuccess, Is.True);
+		}
+
+		[Test]
+		public void Should_Resolve_Multiple_Keyed_Policies()
+		{
+			// Act
+			var keyA = typeof(TestPolicyBuilderA);
+			var keyB = typeof(TestPolicyBuilderB);
+			var policyA = _serviceProvider!.GetRequiredKeyedPolicy(keyA);
+			var policyB = _serviceProvider!.GetRequiredKeyedPolicy(keyB);
+
+			// Assert
+			Assert.That(policyA.PolicyName, Is.EqualTo("TestPolicyA"));
+			Assert.That(policyB.PolicyName, Is.EqualTo("TestPolicyB"));
+			Assert.That(policyA, Is.Not.SameAs(policyB));
+		}
 	}
 }
