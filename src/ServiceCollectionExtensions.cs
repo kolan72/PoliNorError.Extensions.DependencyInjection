@@ -143,6 +143,94 @@ namespace PoliNorError.Extensions.DependencyInjection
 			return services;
 		}
 
+		/// <summary>
+		/// Registers a policy as a keyed <see cref="IPolicy"/> service using a factory delegate.
+		/// </summary>
+		/// <remarks>
+		/// <para>
+		/// The resulting <see cref="IPolicy"/> can be resolved via
+		/// <c>sp.GetRequiredKeyedService&lt;IPolicy&gt;("key")</c> or injected with
+		/// <c>[FromKeyedServices("key")] IPolicy policy</c>.
+		/// </para>
+		/// <para>
+		/// This method does not require a builder class — the factory delegate directly produces
+		/// the <see cref="IPolicyBase"/> instance.
+		/// </para>
+		/// </remarks>
+		/// <param name="services">The <see cref="IServiceCollection"/> to add the service to.</param>
+		/// <param name="key">The service key used to resolve this policy.</param>
+		/// <param name="factory">
+		/// A delegate that creates the <see cref="IPolicyBase"/> instance from the
+		/// <see cref="IServiceProvider"/>.
+		/// </param>
+		/// <param name="lifetime">The <see cref="ServiceLifetime"/> for the registration. Defaults to <see cref="ServiceLifetime.Transient"/>.</param>
+		/// <returns>The <see cref="IServiceCollection"/> for method chaining.</returns>
+		public static IServiceCollection AddKeyedPolicy(
+			this IServiceCollection services,
+			string key,
+			Func<IServiceProvider, IPolicyBase> factory,
+			ServiceLifetime lifetime = ServiceLifetime.Transient)
+		{
+			ArgumentNullException.ThrowIfNull(key);
+			ArgumentNullException.ThrowIfNull(factory);
+
+			services.Add(new ServiceDescriptor(
+				typeof(IPolicy),
+				key,
+				(sp, _) => new KeyedProxyPolicy(factory(sp)),
+				lifetime));
+
+			return services;
+		}
+
+		/// <summary>
+		/// Registers a policy as a keyed <see cref="IPolicy"/> service, using the existing
+		/// <see cref="IPolicyBuilder{TBuilder}"/> infrastructure to produce the policy.
+		/// </summary>
+		/// <remarks>
+		/// <para>
+		/// The builder type <typeparamref name="TBuilder"/> must already be registered in the
+		/// <see cref="IServiceCollection"/> (e.g., via <see cref="AddPoliNorError(IServiceCollection, Assembly, ServiceLifetime)"/>).
+		/// </para>
+		/// <para>
+		/// The resulting <see cref="IPolicy"/> can be resolved via
+		/// <c>sp.GetRequiredKeyedService&lt;IPolicy&gt;("key")</c> or injected with
+		/// <c>[FromKeyedServices("key")] IPolicy policy</c>.
+		/// </para>
+		/// </remarks>
+		/// <typeparam name="TBuilder">
+		/// The builder type whose <see cref="IPolicyBuilder{TBuilder}.Build"/> result this policy wraps.
+		/// Must implement <see cref="IPolicyBuilder{TBuilder}"/>.
+		/// </typeparam>
+		/// <param name="services">The <see cref="IServiceCollection"/> to add the service to.</param>
+		/// <param name="key">The service key used to resolve this policy.</param>
+		/// <param name="lifetime">The <see cref="ServiceLifetime"/> for the registration. Defaults to <see cref="ServiceLifetime.Transient"/>.</param>
+		/// <returns>The <see cref="IServiceCollection"/> for method chaining.</returns>
+		public static IServiceCollection AddKeyedPolicy<TBuilder>(
+			this IServiceCollection services,
+			string key,
+			ServiceLifetime lifetime = ServiceLifetime.Transient)
+			where TBuilder : IPolicyBuilder<TBuilder>
+		{
+			ArgumentNullException.ThrowIfNull(key);
+
+			services.Add(new ServiceDescriptor(
+				typeof(IPolicy),
+				key,
+				(sp, _) =>
+				{
+					var builder = sp.GetRequiredService<IPolicyBuilder<TBuilder>>();
+					if (builder is ISetConfigurator configurable)
+					{
+						configurable.SetConfigurator(sp);
+					}
+					return new KeyedProxyPolicy(builder.Build());
+				},
+				lifetime));
+
+			return services;
+		}
+
 		private static bool InheritsFromPolicyConfigurator(Type? type)
 		{
 			while (type != null && type != typeof(object))
