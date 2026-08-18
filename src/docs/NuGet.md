@@ -167,6 +167,58 @@ public class Worker
 
 ---
 
+## 🔑 Keyed Services
+
+Policies can also be registered as [keyed services](https://learn.microsoft.com/en-us/dotnet/core/di) — under an arbitrary stable key instead of a builder type. This is useful when you want to manage several preconfigured policies (e.g. `http-retry` and `db-retry`) behind one service type, or when a policy is created from a factory instead of a builder class.
+
+### Registering a keyed policy
+
+From a factory (no builder class required):
+
+```csharp
+services.AddKeyedPolicy("http-retry", sp => new RetryPolicy(3)
+	.WithPolicyName("HttpRetry")
+	.WithWait(new TimeSpan(0, 0, 3)));
+```
+
+From an existing builder (reuses your `IPolicyBuilder<T>` / `PolicyConfigurator` setup):
+
+```csharp
+services.AddKeyedPolicy<SomePolicyBuilder>("db-retry");
+```
+
+If the builder is not registered yet (for example because `AddPoliNorError()` was not called), it is registered automatically.
+
+### Resolving a keyed policy
+
+Keyed services are resolved through `IKeyedServiceProvider`. For a type-safe, key-only API, use the library's resolver extensions:
+
+```csharp
+public class Worker(IServiceProvider services)
+{
+	private readonly IPolicy _httpRetry = services.GetRequiredKeyedPolicy("http-retry");
+
+	public async Task DoWorkAsync(CancellationToken token)
+		=> await _httpRetry.HandleAsync(MightThrowAsync, token);
+
+	private async Task MightThrowAsync(CancellationToken token)
+	{
+		await Task.Delay(100, token);
+		throw new SomeException("Something went wrong.");
+	}
+}
+```
+
+`GetKeyedPolicy(key)` returns `null` when the key is unknown, `GetRequiredKeyedPolicy(key)` throws. You can equally use `GetRequiredKeyedService<IPolicy>(key)` directly, and in ASP.NET Core inject a keyed policy with `[FromKeyedServices("http-retry")]`.
+
+### Lifetime and keys
+
+- Default lifetime is `Transient` (the factory runs on every resolution); use `Scoped` or `Singleton` to share a single policy instance.
+- Keys are compared by value at resolution time, so use `const` or static strings.
+- Keyed policies coexist with the typed `IPolicy<TBuilder>` pipeline — both can be resolved from the same provider.
+
+---
+
 ## 🔥 Advanced Usage: Separation of Concerns with Configurators and Builders
 
 For more complex scenarios, `PoliNorError.Extensions.DependencyInjectio`n supports an advanced pattern that separates policy **creation** from policy **configuration**. 
