@@ -37,17 +37,10 @@ namespace KeyedPolicyDemo
 				// Register all IPolicyBuilder<T> implementations from the current assembly
 				.AddPoliNorError(Assembly.GetExecutingAssembly())
 
-				// AddKeyedPolicy (lambda factory): register a keyed policy using a factory delegate
-				.AddKeyedPolicy("lambda-retry", _ => new RetryPolicy(1)
-					.WithPolicyName("LambdaRetryPolicy")
-					.WithWait(new TimeSpan(0, 0, 1)))
+				.AddPolicyRegistry(registry => registry.AddPolicy<SomePolicyBuilder>())
+				.AddPolicyRegistry(registry => registry.AddPolicy<AnotherPolicyBuilder>())
+				.AddPolicyRegistry(registry => registry.AddPolicy<ThirdPolicyBuilder>())
 
-				// AddKeyedPolicy<TBuilder>: register a keyed policy using an existing IPolicyBuilder<T>
-				// The builder type must already be registered (via AddPoliNorError above)
-				.AddKeyedPolicy<SomePolicyBuilder>("builder-retry")
-
-				// Same builder type under a different key, with Singleton lifetime
-				.AddKeyedPolicy<AnotherPolicyBuilder>("another-retry", ServiceLifetime.Singleton)
 
 				.BuildServiceProvider();
 

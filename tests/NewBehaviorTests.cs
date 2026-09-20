@@ -163,6 +163,188 @@ namespace PoliNorError.Extensions.DependencyInjection.Tests
 			// And IPolicy<> is registered exactly once
 			Assert.That(services.Count(d => d.ServiceType == typeof(IPolicy<>)), Is.EqualTo(1));
 		}
+
+		// -------------------------------------------------------------------------
+		// AddPolicyRegistry Tests
+		// -------------------------------------------------------------------------
+
+		[Test]
+		public void AddPolicyRegistry_WithTransientLifetime_RegistersPoliciesAsTransient()
+		{
+			// Arrange
+			var services = new ServiceCollection();
+			services.AddPoliNorError(Assembly.GetExecutingAssembly(), ServiceLifetime.Transient);
+
+			// Act
+			services.AddPolicyRegistry(
+				builder => builder.AddPolicy<TestPolicyBuilder>(),
+				ServiceLifetime.Transient);
+
+			// Assert
+			var descriptor = services.FirstOrDefault(d => 
+				d.ServiceType == typeof(IPolicyBase) && 
+				d.ServiceKey?.Equals(typeof(TestPolicyBuilder)) == true);
+			
+			Assert.That(descriptor, Is.Not.Null);
+			Assert.That(descriptor!.Lifetime, Is.EqualTo(ServiceLifetime.Transient));
+		}
+
+		[Test]
+		public void AddPolicyRegistry_WithScopedLifetime_RegistersPoliciesAsScoped()
+		{
+			// Arrange
+			var services = new ServiceCollection();
+			services.AddPoliNorError(Assembly.GetExecutingAssembly(), ServiceLifetime.Scoped);
+
+			// Act
+			services.AddPolicyRegistry(
+				builder => builder.AddPolicy<TestPolicyBuilder>(),
+				ServiceLifetime.Scoped);
+
+			// Assert
+			var descriptor = services.FirstOrDefault(d => 
+				d.ServiceType == typeof(IPolicyBase) && 
+				d.ServiceKey?.Equals(typeof(TestPolicyBuilder)) == true);
+			
+			Assert.That(descriptor, Is.Not.Null);
+			Assert.That(descriptor!.Lifetime, Is.EqualTo(ServiceLifetime.Scoped));
+		}
+
+		[Test]
+		public void AddPolicyRegistry_WithSingletonLifetime_RegistersPoliciesAsSingleton()
+		{
+			// Arrange
+			var services = new ServiceCollection();
+			services.AddPoliNorError(Assembly.GetExecutingAssembly(), ServiceLifetime.Singleton);
+
+			// Act
+			services.AddPolicyRegistry(
+				builder => builder.AddPolicy<TestPolicyBuilder>(),
+				ServiceLifetime.Singleton);
+
+			// Assert
+			var descriptor = services.FirstOrDefault(d => 
+				d.ServiceType == typeof(IPolicyBase) && 
+				d.ServiceKey?.Equals(typeof(TestPolicyBuilder)) == true);
+			
+			Assert.That(descriptor, Is.Not.Null);
+			Assert.That(descriptor!.Lifetime, Is.EqualTo(ServiceLifetime.Singleton));
+		}
+
+		[Test]
+		public void AddPolicyRegistry_DefaultLifetime_IsTransient()
+		{
+			// Arrange
+			var services = new ServiceCollection();
+			services.AddPoliNorError(Assembly.GetExecutingAssembly());
+
+			// Act - no lifetime specified, should default to Transient
+			services.AddPolicyRegistry(builder => builder.AddPolicy<TestPolicyBuilder>());
+
+			// Assert
+			var descriptor = services.FirstOrDefault(d => 
+				d.ServiceType == typeof(IPolicyBase) && 
+				d.ServiceKey?.Equals(typeof(TestPolicyBuilder)) == true);
+			
+			Assert.That(descriptor, Is.Not.Null);
+			Assert.That(descriptor!.Lifetime, Is.EqualTo(ServiceLifetime.Transient));
+		}
+
+		[Test]
+		public void AddPolicyRegistry_RegistryIsAlwaysSingleton()
+		{
+			// Arrange
+			var services = new ServiceCollection();
+			services.AddPoliNorError(Assembly.GetExecutingAssembly());
+
+			// Act - call with different lifetimes
+			services.AddPolicyRegistry(builder => builder.AddPolicy<TestPolicyBuilder>(), ServiceLifetime.Transient);
+			services.AddPolicyRegistry(builder => builder.AddPolicy<AnotherPolicyBuilder>(), ServiceLifetime.Scoped);
+
+			// Assert - registry should be singleton and registered only once
+			var registryDescriptors = services.Where(d => d.ServiceType == typeof(IPolicyRegistry)).ToList();
+			Assert.That(registryDescriptors, Has.Count.EqualTo(1));
+			Assert.That(registryDescriptors[0].Lifetime, Is.EqualTo(ServiceLifetime.Singleton));
+		}
+
+		[Test]
+		public void AddPolicyRegistry_CalledMultipleTimes_DoesNotDuplicateRegistry()
+		{
+			// Arrange
+			var services = new ServiceCollection();
+			services.AddPoliNorError(Assembly.GetExecutingAssembly());
+
+			// Act - call multiple times
+			services.AddPolicyRegistry(builder => builder.AddPolicy<TestPolicyBuilder>());
+			services.AddPolicyRegistry(builder => builder.AddPolicy<AnotherPolicyBuilder>());
+			services.AddPolicyRegistry(builder => builder.AddPolicy<ThirdPolicyBuilder>());
+
+			// Assert - registry should be registered only once
+			var registryDescriptors = services.Where(d => d.ServiceType == typeof(IPolicyRegistry)).ToList();
+			Assert.That(registryDescriptors, Has.Count.EqualTo(1), 
+				"Registry should be registered exactly once regardless of how many times AddPolicyRegistry is called");
+		}
+
+		[Test]
+		public void TransientPolicies_CreateNewInstanceEachTime()
+		{
+			// Arrange
+			var services = new ServiceCollection();
+			services.AddLogging();
+			services.AddPoliNorError(Assembly.GetExecutingAssembly(), ServiceLifetime.Transient);
+			services.AddPolicyRegistry(
+				builder => builder.AddPolicy<StatefulPolicyBuilder>(),
+				ServiceLifetime.Transient);
+
+			var provider = services.BuildServiceProvider();
+			var registry = provider.GetRequiredService<IPolicyRegistry>();
+
+			// Act
+			var policy1 = registry.GetPolicy<StatefulPolicyBuilder>();
+			var policy2 = registry.GetPolicy<StatefulPolicyBuilder>();
+
+			// Assert - different instances
+			Assert.That(policy1, Is.Not.SameAs(policy2));
+		}
+
+		[Test]
+		public void SingletonPolicies_ReuseSameInstance()
+		{
+			// Arrange
+			var services = new ServiceCollection();
+			services.AddLogging();
+			services.AddPoliNorError(Assembly.GetExecutingAssembly(), ServiceLifetime.Singleton);
+			services.AddPolicyRegistry(
+				builder => builder.AddPolicy<StatefulPolicyBuilder>(),
+				ServiceLifetime.Singleton);
+			
+			var provider = services.BuildServiceProvider();
+			var registry = provider.GetRequiredService<IPolicyRegistry>();
+
+			// Act
+			var policy1 = registry.GetPolicy<StatefulPolicyBuilder>();
+			var policy2 = registry.GetPolicy<StatefulPolicyBuilder>();
+
+			// Assert - same instance
+			Assert.That(policy1, Is.SameAs(policy2));
+		}
+
+		[Test]
+		public void AddPolicyRegistry_UsesIServiceProvider_NotCast()
+		{
+			// Arrange
+			var services = new ServiceCollection();
+			services.AddPoliNorError(Assembly.GetExecutingAssembly());
+			services.AddPolicyRegistry(builder => builder.AddPolicy<TestPolicyBuilderA>());
+			var provider = services.BuildServiceProvider();
+
+			// Act - registry should resolve without needing IKeyedServiceProvider cast
+			var registry = provider.GetRequiredService<IPolicyRegistry>();
+			var policy = registry.GetPolicy<TestPolicyBuilderA>();
+
+			// Assert
+			Assert.That(policy, Is.Not.Null);
+		}
 	}
 
 	// -------------------------------------------------------------------------

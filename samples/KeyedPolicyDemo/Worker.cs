@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+using KeyedPolicyDemo.Builders;
 using PoliNorError;
 using PoliNorError.Extensions.DependencyInjection;
 using Shared;
@@ -7,26 +7,22 @@ namespace KeyedPolicyDemo
 {
 	public class Worker
 	{
-		private readonly IServiceProvider _serviceProvider;
+		private readonly IPolicyBase _somePolicy;
+		private readonly IPolicyBase _anotherPolicy;
+		private readonly IPolicyBase _thirdPolicy;
 
-		public Worker(IServiceProvider serviceProvider)
+		public Worker(IPolicyRegistry policyRegistry)
 		{
-			_serviceProvider = serviceProvider;
+			_somePolicy = policyRegistry.GetPolicy<SomePolicyBuilder>();
+			_anotherPolicy = policyRegistry.GetPolicy<AnotherPolicyBuilder>();
+			_thirdPolicy = policyRegistry.GetPolicy<ThirdPolicyBuilder>();
 		}
 
 		public async Task DoWorkAsync(CancellationToken token)
 		{
-			// Resolve a keyed policy registered via AddKeyedPolicy (lambda factory)
-			var lambdaPolicy = _serviceProvider.GetRequiredKeyedService<IPolicy>("lambda-retry");
-			await lambdaPolicy.HandleAsync(MightThrowAsync, token);
-
-			// Resolve a keyed policy registered via AddKeyedPolicy<TBuilder> (builder-based)
-			var builderPolicy = _serviceProvider.GetRequiredKeyedService<IPolicy>("builder-retry");
-			await builderPolicy.HandleAsync(MightThrowAsync, token);
-
-			// Resolve another builder-based keyed policy under a different key
-			var anotherBuilderPolicy = _serviceProvider.GetRequiredKeyedService<IPolicy>("another-retry");
-			await anotherBuilderPolicy.HandleAsync(MightThrowAsync, token);
+			await _somePolicy.HandleAsync(MightThrowAsync, token);
+			await _anotherPolicy.HandleAsync(MightThrowAsync, token);
+			await _thirdPolicy.HandleAsync(MightThrowAsync, token);
 		}
 
 		private async Task MightThrowAsync(CancellationToken token)
