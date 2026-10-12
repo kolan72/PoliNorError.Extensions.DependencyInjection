@@ -3,7 +3,7 @@ using PoliNorError;
 using Microsoft.Extensions.Logging;
 using Shared;
 
-namespace KeyedPolicyDemo.Builders
+namespace PolicyRegistryDemo.Builders
 {
 	public class SomePolicyBuilder : IPolicyBuilder<SomePolicyBuilder>
 	{

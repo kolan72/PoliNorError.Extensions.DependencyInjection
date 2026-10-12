@@ -3,7 +3,7 @@ using PoliNorError;
 using PoliNorError.Extensions.DependencyInjection;
 using Shared;
 
-namespace KeyedPolicyDemo.Builders
+namespace PolicyRegistryDemo.Builders
 {
 	public class ThirdPolicyBuilder : IPolicyBuilder<ThirdPolicyBuilder>
 	{

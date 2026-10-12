@@ -1,9 +1,9 @@
-using KeyedPolicyDemo.Builders;
+using PolicyRegistryDemo.Builders;
 using PoliNorError;
 using PoliNorError.Extensions.DependencyInjection;
 using Shared;
 
-namespace KeyedPolicyDemo
+namespace PolicyRegistryDemo
 {
 	public class Worker
 	{

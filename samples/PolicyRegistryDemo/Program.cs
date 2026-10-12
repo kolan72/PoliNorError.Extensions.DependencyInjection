@@ -1,13 +1,12 @@
-using KeyedPolicyDemo.Builders;
+using PolicyRegistryDemo.Builders;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
-using PoliNorError;
 using PoliNorError.Extensions.DependencyInjection;
 using System.Reflection;
 using Shared;
 
-namespace KeyedPolicyDemo
+namespace PolicyRegistryDemo
 {
 #pragma warning disable S1118 // Utility classes should not have public constructors
 	internal class Program

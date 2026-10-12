@@ -11,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared", "Shared\Shared.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConfiguratorDemo", "ConfiguratorDemo\ConfiguratorDemo.csproj", "{EA918812-CD33-42E6-8061-D77D73FC6ABA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeyedPolicyDemo", "KeyedPolicyDemo\KeyedPolicyDemo.csproj", "{67138701-26F2-47C7-8DDE-F6A9F75A4A4C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PolicyRegistryDemo", "PolicyRegistryDemo\PolicyRegistryDemo.csproj", "{67138701-26F2-47C7-8DDE-F6A9F75A4A4C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
