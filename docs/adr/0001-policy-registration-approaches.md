@@ -1,6 +1,6 @@
 # ADR-0001: Policy Registration Approaches
 
-**Date:** 2024-09-20  
+**Date:** 2026-09-20  
 **Status:** Accepted  
 **Author:** Kiro (AI Assistant)  
 **Context:** Architectural Refactoring Discussion  
