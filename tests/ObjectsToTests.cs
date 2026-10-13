@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace PoliNorError.Extensions.DependencyInjection.Tests
@@ -248,6 +249,40 @@ namespace PoliNorError.Extensions.DependencyInjection.Tests
 			var policy = new RetryPolicy(1);
 			policy.WithPolicyName("SomePolicy");
 			return policy;
-		}		
+		}
+	}
+
+	// Stateful Policy Builder for lifetime testing
+	public class StatefulPolicyBuilder : IPolicyBuilder<StatefulPolicyBuilder>
+	{
+		private static int _instanceCounter;
+		public int InstanceId { get; }
+
+		public StatefulPolicyBuilder()
+		{
+			InstanceId = Interlocked.Increment(ref _instanceCounter);
+		}
+
+		public IPolicyBase Build()
+		{
+			return new TestPolicy($"StatefulPolicy_{InstanceId}");
+		}
+	}
+
+	// Additional builders for AddPolicyRegistry tests
+	public class AnotherPolicyBuilder : IPolicyBuilder<AnotherPolicyBuilder>
+	{
+		public IPolicyBase Build()
+		{
+			return new TestPolicy("AnotherPolicy");
+		}
+	}
+
+	public class ThirdPolicyBuilder : IPolicyBuilder<ThirdPolicyBuilder>
+	{
+		public IPolicyBase Build()
+		{
+			return new TestPolicy("ThirdPolicy");
+		}
 	}
 }

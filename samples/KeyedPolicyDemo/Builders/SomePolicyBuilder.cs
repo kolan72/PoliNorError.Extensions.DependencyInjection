@@ -1,0 +1,32 @@
+using PoliNorError.Extensions.DependencyInjection;
+using PoliNorError;
+using Microsoft.Extensions.Logging;
+using Shared;
+
+namespace KeyedPolicyDemo.Builders
+{
+	public class SomePolicyBuilder : IPolicyBuilder<SomePolicyBuilder>
+	{
+		private readonly ILogger<SomePolicyBuilder> _logger;
+
+		public SomePolicyBuilder(ILogger<SomePolicyBuilder> logger)
+		{
+			_logger = logger;
+		}
+
+		public IPolicyBase Build()
+		{
+			return new RetryPolicy(3)
+					.WithPolicyName("SomeRetryPolicy")
+					.WithErrorProcessor(new RetryLoggingErrorProcessor(_logger))
+					.WithWait(new TimeSpan(0, 0, 3))
+					.AddPolicyResultHandler(pr =>
+					{
+						Log.PolicyFailedToHandleException(
+							_logger,
+							pr.UnprocessedError,
+							pr.PolicyName);
+					});
+		}
+	}
+}
