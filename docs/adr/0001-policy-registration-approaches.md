@@ -4,25 +4,30 @@
 **Status:** Accepted  
 **Author:** Kiro (AI Assistant)  
 **Context:** Architectural Refactoring Discussion  
-**Related:** `src/ServiceCollectionExtensions.cs`, `samples/KeyedPolicyDemo/`
+**Related:** `src/ServiceCollectionExtensions.cs`, `samples/KeyedPolicyDemo/`, `samples/PolicyRegistryDemo/`
 
 ---
 
 ## Status
 
-Accepted — Both patterns will be supported with clear guidance on when to use each.
+Accepted — All patterns will be supported with clear guidance on when to use each.
 
 ---
 
 ## Context
 
-The library provides two mechanisms for registering and consuming resilience policies:
+The library provides three mechanisms for registering and consuming resilience policies:
 
 1. **Direct IServiceProvider Resolution** (original/primary approach)
    - Consumer receives `IPolicy<TBuilder>` via constructor injection
    - Policy resolution happens through standard DI container
 
-2. **ResiliencePolicyBuilder + IPolicyRegistry** (optional/advanced approach - now PolicyRegistryBuilder + IPolicyRegistry)
+2. **Keyed Services via `AddKeyedPolicy`** (string-keyed approach)
+   - Policy is registered under a string key as a keyed `IPolicy` service
+   - Consumer injects it with `[FromKeyedServices("key")]` or resolves it with `GetRequiredKeyedService<IPolicy>("key")`
+   - Two overloads: builder-based (`AddKeyedPolicy<TBuilder>(key)`, reusing the `IPolicy<TBuilder>` pipeline) and lambda-based (`AddKeyedPolicy(key, factory)`)
+
+3. **ResiliencePolicyBuilder + IPolicyRegistry** (optional/advanced approach - now PolicyRegistryBuilder + IPolicyRegistry)
    - Consumer receives `IPolicyRegistry` via constructor injection
    - Policy resolution happens through registry abstraction
 
@@ -38,7 +43,7 @@ The registry pattern was initially questioned for potentially introducing a serv
 
 ## Decision
 
-**Keep both patterns and document clear guidance on when to use each.**
+**Keep all three patterns and document clear guidance on when to use each.**
 
 ### Primary Approach: Direct Resolution (1-4 policies)
 
@@ -62,6 +67,27 @@ public class MyService
         _retryPolicy = retryPolicy;
         _circuitBreaker = circuitBreaker;
     }
+}
+```
+
+### Intermediate Approach: Keyed Policies (`AddKeyedPolicy`)
+
+**Use when:**
+- You need multiple named variants of the same builder (e.g., `"retry-primary"` vs `"retry-relaxed"`)
+- Keys come from configuration (config-driven policy selection)
+- You want `[FromKeyedServices("key")]` constructor injection
+- You need an ad-hoc policy without defining a builder class (lambda overload)
+
+**Example:**
+```csharp
+services
+	.AddKeyedPolicy<SomePolicyBuilder>("retry-primary")
+	.AddKeyedPolicy<SomePolicyBuilder>("retry-relaxed", ServiceLifetime.Singleton)
+	.AddKeyedPolicy("orders-policy", sp => new RetryPolicy(2)...);
+
+public class MyService
+{
+	public MyService([FromKeyedServices("retry-primary")] IPolicy retryPolicy) { }
 }
 ```
 
@@ -121,6 +147,17 @@ public class ResilienceCoordinator
 - **Two-Step Resolution**: Inject registry, then call `.GetPolicy<T>()` // Renamed from Get
 - **Runtime Resolution**: Failures happen at construction rather than container validation
 - **Additional Abstraction**: Requires understanding registry pattern
+
+### Keyed Policy Pattern Pros
+- **Named Variants**: Same builder registered under multiple keys with independent lifetimes
+- **Config-Driven**: Keys can come from configuration without code changes
+- **Standard .NET API**: Uses the built-in keyed services (`[FromKeyedServices]`, `GetRequiredKeyedService`)
+- **Ad-hoc Policies**: Lambda overload creates policies without a builder class
+
+### Keyed Policy Pattern Cons
+- **String Keys**: Typo-prone; no compile-time check on key names
+- **Reduced Discoverability**: Same trade-off as the registry — dependencies hidden behind keys
+- **.NET 8+ Only**: Keyed services API requires modern target frameworks
 
 ### Performance Impact
 - Direct resolution: One service provider lookup
@@ -249,7 +286,8 @@ public class ResilienceCoordinator
 
 - [Detailed Comparison](../docs/policy-registration-comparison.md) - Full analysis of trade-offs
 - [ServiceCollectionExtensions.cs](../src/ServiceCollectionExtensions.cs) - Implementation reference
-- [KeyedPolicyDemo sample](../samples/KeyedPolicyDemo/) - Registry pattern example
+- [PolicyRegistryDemo sample](../samples/PolicyRegistryDemo/) - Registry pattern example
+- [KeyedPolicyDemo sample](../samples/KeyedPolicyDemo/) - Keyed policy example
 - [Intro sample](../samples/Intro/) - Direct resolution example
 
 ---
