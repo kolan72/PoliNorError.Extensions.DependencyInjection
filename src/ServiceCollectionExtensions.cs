@@ -172,6 +172,8 @@ namespace PoliNorError.Extensions.DependencyInjection
 			ServiceLifetime lifetime = ServiceLifetime.Transient)
 		{
 			ArgumentNullException.ThrowIfNull(key);
+			if (string.IsNullOrWhiteSpace(key))
+				throw new ArgumentException("Key must be a non-empty, non-whitespace string.", nameof(key));
 			ArgumentNullException.ThrowIfNull(factory);
 
 			services.Add(new ServiceDescriptor(
@@ -213,19 +215,14 @@ namespace PoliNorError.Extensions.DependencyInjection
 			where TBuilder : IPolicyBuilder<TBuilder>
 		{
 			ArgumentNullException.ThrowIfNull(key);
+			if (string.IsNullOrWhiteSpace(key))
+				throw new ArgumentException("Key must be a non-empty, non-whitespace string.", nameof(key));
 
 			services.Add(new ServiceDescriptor(
 				typeof(IPolicy),
 				key,
-				(sp, _) =>
-				{
-					var builder = sp.GetRequiredService<IPolicyBuilder<TBuilder>>();
-					if (builder is ISetConfigurator configurable)
-					{
-						configurable.SetConfigurator(sp);
-					}
-					return new KeyedProxyPolicy(builder.Build());
-				},
+				(sp, _) => new KeyedProxyPolicy(
+					sp.GetRequiredService<IPolicy<TBuilder>>()),
 				lifetime));
 
 			return services;

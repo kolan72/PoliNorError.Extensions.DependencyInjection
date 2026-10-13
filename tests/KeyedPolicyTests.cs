@@ -40,6 +40,22 @@ namespace PoliNorError.Extensions.DependencyInjection.Tests
 		}
 
 		[Test]
+		public void Should_AddKeyedPolicy_WithLambdaFactory_EmptyKey_ThrowsArgumentException()
+		{
+			var services = new ServiceCollection();
+			Assert.Throws<ArgumentException>(() =>
+				services.AddKeyedPolicy(string.Empty, _ => new TestPolicy("test")));
+		}
+
+		[Test]
+		public void Should_AddKeyedPolicy_WithLambdaFactory_WhitespaceKey_ThrowsArgumentException()
+		{
+			var services = new ServiceCollection();
+			Assert.Throws<ArgumentException>(() =>
+				services.AddKeyedPolicy("   ", _ => new TestPolicy("test")));
+		}
+
+		[Test]
 		public void Should_Resolve_Different_Policies_By_Key()
 		{
 			var services = new ServiceCollection();
@@ -147,6 +163,22 @@ namespace PoliNorError.Extensions.DependencyInjection.Tests
 			var services = new ServiceCollection();
 			Assert.Throws<ArgumentNullException>(() =>
 				services.AddKeyedPolicy<TestPolicyBuilder1>(null!));
+		}
+
+		[Test]
+		public void Should_AddKeyedPolicy_BuilderBased_EmptyKey_ThrowsArgumentException()
+		{
+			var services = new ServiceCollection();
+			Assert.Throws<ArgumentException>(() =>
+				services.AddKeyedPolicy<TestPolicyBuilder1>(string.Empty));
+		}
+
+		[Test]
+		public void Should_AddKeyedPolicy_BuilderBased_WhitespaceKey_ThrowsArgumentException()
+		{
+			var services = new ServiceCollection();
+			Assert.Throws<ArgumentException>(() =>
+				services.AddKeyedPolicy<TestPolicyBuilder1>("   "));
 		}
 
 		[Test]
