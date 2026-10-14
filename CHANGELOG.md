@@ -1,3 +1,15 @@
+## 0.0.8.0
+
+- Add keyed services support for policies
+- Introduce policy registration in the registry via the `IServiceCollection.AddPolicyRegistry` extension method.
+- Adopt Central Package Management
+- Add KeyedPolicyDemo sample illustrating AddKeyedPolicy overloads.
+- Add `LoggingPolicyBuilder` to the `Intro` sample to demonstrate dependency injection instead of manually instantiating the error processor.
+- Update coverlet.collector to 10.1.0.
+- Update Microsoft nuget packages for tests.
+- Update NUnit3TestAdapter to 6.3.1.
+- Add ADR-0001 on policy registration approaches.
+
 ## 0.0.5.0
 
 - BREAKING CHANGE: Change `ServiceCollectionExtensions.AddAllPolicyConfigurators` to `internal`; Normalize null assembly in `ServiceCollectionExtensions.AddPoliNorError` and switch to `TryAdd` .
