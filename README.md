@@ -1,5 +1,8 @@
 # PoliNorError.Extensions.DependencyInjection
 
+[![nuget](https://img.shields.io/nuget/v/PoliNorError.Extensions.DependencyInjection
+)](https://www.nuget.org/packages/PoliNorError.Extensions.DependencyInjection)
+
 ![PoliNorError.Extensions.DependencyInjection](PoliNorError.png)
 
 The PoliNorError.Extensions.DependencyInjection package extends  [PoliNorError](https://github.com/kolan72/PoliNorError) library to provide integration with Microsoft Dependency Injection.

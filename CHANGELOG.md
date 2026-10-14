@@ -1,3 +1,22 @@
+## 0.0.5.0
+
+- BREAKING CHANGE: Change `ServiceCollectionExtensions.AddAllPolicyConfigurators` to `internal`; Normalize null assembly in `ServiceCollectionExtensions.AddPoliNorError` and switch to `TryAdd` .
+- BREAKING CHANGE: Add `TBuilder` type parameter to `PolicyBuilder<TPolicy, TConfigurator>`, rename the class to `PolicyBuilder<TPolicy, TConfigurator, TBuilder>` and add the self-referential constraint `where TBuilder : PolicyBuilder<TPolicy, TConfigurator, TBuilder>`.
+- Refactor and simplify `ProxyPolicy` constructor.
+- Update lib and samples to PoliNorError 2.24.30.
+- Update lib for Microsoft.Extensions.DependencyInjection 10.0.9.
+- Add new tests for `ServiceCollectionExtensions`.
+- Update samples for breaking changes.
+- Update Microsoft NuGet packages for the Samples.
+- Target net9.0 in tests and update NUnit package.
+- Update coverlet.collector for tests.
+- Update Microsoft.NET.Test.Sdk for tests.
+- Add XML docs to `ProxyPolicy<TBuilder>` and add null guard.
+- Add xml doc to `PolicyConfigurator<TPolicy>`.
+- Add xml doc to `ISetConfigurator`.
+- Update README.md and NuGet.md.
+
+
 ## 0.0.3.2
 
 - Update lib and samples to PoliNorError 2.24.20.
