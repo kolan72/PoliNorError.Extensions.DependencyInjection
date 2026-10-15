@@ -147,6 +147,16 @@ public class Worker
   - Registers them and wires up `IPolicy<T>` → `ProxyPolicy<T>` automatically.  
 ---
 
+**Keyed Services Support**  
+  - `AddKeyedPolicy` registers policies under string keys (builder-based or lambda-based).  
+  - Resolved via `[FromKeyedServices]` or `GetRequiredKeyedService<IPolicy>`.  
+---
+
+**Policy Registry**  
+  - `AddPolicyRegistry` opt-in registration for resolution via `IPolicyRegistry.GetPolicy<TBuilder>()`.  
+  - Keeps constructors clean when a consumer needs many policies.  
+---
+
 ## 🧩 How It Works
 
 1. You create builder classes that implement `IPolicyBuilder<TBuilder>`.  
@@ -164,6 +174,88 @@ public class Worker
 - **Discoverable**: Constructor injection makes dependencies explicit.  
 - **Testable**: Swap out builders or inject fake policies in tests.  
 - **Extensible**: Add new [PoliNorError](https://github.com/kolan72/PoliNorError) policies by just adding new builders.
+
+---
+
+## 🔑 Keyed Services Support (`AddKeyedPolicy`)
+
+Register policies under string keys using the standard .NET keyed services API.
+
+**Builder-based overload** — reuses the existing `IPolicy<TBuilder>` pipeline:
+
+```csharp
+services
+	.AddPoliNorError(Assembly.GetExecutingAssembly())
+
+	// The same builder under two keys, with independent lifetimes
+	.AddKeyedPolicy<SomePolicyBuilder>("retry-primary")
+	.AddKeyedPolicy<SomePolicyBuilder>("retry-relaxed", ServiceLifetime.Singleton);
+```
+
+**Lambda-based overload** — ad-hoc policy without a builder class:
+
+```csharp
+services.AddKeyedPolicy("orders-policy",
+	sp => new RetryPolicy(2)
+		.WithPolicyName("OrdersPolicy")
+		.WithErrorProcessor(new RetryLoggingErrorProcessor(sp.GetRequiredService<ILogger<Program>>())),
+	ServiceLifetime.Singleton);
+```
+
+**Consume keyed policies** via `[FromKeyedServices]` or `GetRequiredKeyedService`:
+
+```csharp
+public class Worker
+{
+	public Worker([FromKeyedServices("retry-primary")] IPolicy primaryPolicy) { }
+
+	public async Task DoWorkAsync(IServiceProvider sp, CancellationToken token)
+	{
+		var ordersPolicy = sp.GetRequiredKeyedService<IPolicy>("orders-policy");
+		// ...
+	}
+}
+```
+
+✅ **Use when:** you need multiple named variants of the same builder, config-driven policy selection, or ad-hoc policies.
+
+---
+
+## 🗂 Policy Registry (`AddPolicyRegistry`)
+
+Register policies for resolution through `IPolicyRegistry` — useful when a consumer needs many policies (e.g., a resilience orchestrator) and constructor bloat becomes a problem.
+
+```csharp
+services
+	.AddPoliNorError(Assembly.GetExecutingAssembly())
+	.AddPolicyRegistry(registry =>
+	{
+		registry.AddPolicy<SomePolicyBuilder>();
+		registry.AddPolicy<AnotherPolicyBuilder>();
+		registry.AddPolicy<ThirdPolicyBuilder>();
+	});
+```
+
+Resolve policies by builder type:
+
+```csharp
+public class Worker
+{
+	private readonly IPolicyBase _somePolicy;
+	private readonly IPolicyBase _anotherPolicy;
+	private readonly IPolicyBase _thirdPolicy;
+
+	public Worker(IPolicyRegistry policyRegistry)
+	{
+		_somePolicy = policyRegistry.GetPolicy<SomePolicyBuilder>();
+		_anotherPolicy = policyRegistry.GetPolicy<AnotherPolicyBuilder>();
+		_thirdPolicy = policyRegistry.GetPolicy<ThirdPolicyBuilder>();
+	}
+	// ...
+}
+```
+
+✅ **Use when:** a consumer needs 5+ policies, or you need dynamic policy selection at runtime.
 
 ---
 
