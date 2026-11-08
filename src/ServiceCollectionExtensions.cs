@@ -228,6 +228,169 @@ namespace PoliNorError.Extensions.DependencyInjection
 			return services;
 		}
 
+		/// <summary>
+		/// Registers a <see cref="PolicyCollection"/> composed of the policies built by two registered
+		/// <see cref="IPolicyBuilder{TBuilder}"/> types as a non-keyed <see cref="IPolicyBase"/> service.
+		/// </summary>
+		/// <remarks>
+		/// <para>
+		/// Both builder types must already be registered in the <see cref="IServiceCollection"/>
+		/// (e.g., via <see cref="AddPoliNorError(IServiceCollection, Assembly, ServiceLifetime)"/>).
+		/// When the service is resolved, the policies returned by their
+    /// <see cref="IPolicyBuilder{TBuilder}.Build"/> methods are appended to a new
+    /// <see cref="PolicyCollection"/> in the order in which the type parameters are specified.
+    /// </para>
+    /// <para>
+    /// The chain is registered as a non-keyed <see cref="IPolicyBase"/> service, so it is resolved
+    /// or injected as <see cref="IPolicyBase"/>. If <see cref="IPolicyBase"/> is registered more than
+    /// once, the last registration wins. This method uses standard <see cref="ServiceDescriptor"/>
+    /// registration (not <c>TryAdd</c>), so registering a chain more than once produces multiple
+    /// descriptors; resolving a single <see cref="IPolicyBase"/> returns the last registered chain.
+    /// Use <c>IServiceProvider.GetServices&lt;IPolicyBase&gt;()</c> to enumerate all registered chains.
+    /// </para>
+		/// <para>
+		/// Because <see cref="PolicyCollection"/> is mutable, the default
+		/// <see cref="ServiceLifetime.Transient"/> is recommended: each resolution produces a fresh chain.
+		/// With <see cref="ServiceLifetime.Singleton"/>, a single shared chain instance is handed to all consumers.
+		/// </para>
+		/// </remarks>
+		/// <typeparam name="TBuilder1">The type of the builder whose policy is the first element of the chain.</typeparam>
+		/// <typeparam name="TBuilder2">The type of the builder whose policy is the second element of the chain.</typeparam>
+		/// <param name="services">The <see cref="IServiceCollection"/> to add the service to.</param>
+		/// <param name="policyName">An optional name for the chain. If <see langword="null"/>, the collection remains nameless.</param>
+		/// <param name="lifetime">The <see cref="ServiceLifetime"/> for the registration. Defaults to <see cref="ServiceLifetime.Transient"/>.</param>
+		/// <returns>The <see cref="IServiceCollection"/> for method chaining.</returns>
+		public static IServiceCollection AddPolicyChain<TBuilder1, TBuilder2>(
+			this IServiceCollection services,
+			string? policyName = null,
+			ServiceLifetime lifetime = ServiceLifetime.Transient)
+			where TBuilder1 : IPolicyBuilder<TBuilder1>
+			where TBuilder2 : IPolicyBuilder<TBuilder2>
+		{
+			ArgumentNullException.ThrowIfNull(services);
+
+			services.Add(new ServiceDescriptor(
+				typeof(IPolicyBase),
+				sp => PolicyChainFactory.Create(sp, policyName, typeof(IPolicy<TBuilder1>), typeof(IPolicy<TBuilder2>)),
+				lifetime));
+
+			return services;
+		}
+
+		/// <summary>
+		/// Registers a <see cref="PolicyCollection"/> composed of the policies built by three registered
+		/// <see cref="IPolicyBuilder{TBuilder}"/> types as a non-keyed <see cref="IPolicyBase"/> service.
+		/// </summary>
+		/// <remarks>
+		/// <para>
+		/// All builder types must already be registered in the <see cref="IServiceCollection"/>
+		/// (e.g., via <see cref="AddPoliNorError(IServiceCollection, Assembly, ServiceLifetime)"/>).
+		/// When the service is resolved, the policies returned by their
+		/// <see cref="IPolicyBuilder{TBuilder}.Build"/> methods are appended to a new
+		/// <see cref="PolicyCollection"/> in the order in which the type parameters are specified.
+		/// </para>
+		/// <para>
+		/// See the remarks of <see cref="AddPolicyChain{TBuilder1, TBuilder2}(IServiceCollection, string, ServiceLifetime)"/>
+		/// for details on resolution semantics, lifetime, and naming — including the
+		/// <see cref="IPolicyBase"/> duplicate-registration (last wins) and lifetime caveats.
+		/// </para>
+		/// </remarks>
+		/// <typeparam name="TBuilder1">The type of the builder whose policy is the first element of the chain.</typeparam>
+		/// <typeparam name="TBuilder2">The type of the builder whose policy is the second element of the chain.</typeparam>
+		/// <typeparam name="TBuilder3">The type of the builder whose policy is the third element of the chain.</typeparam>
+		/// <param name="services">The <see cref="IServiceCollection"/> to add the service to.</param>
+		/// <param name="policyName">An optional name for the chain. If <see langword="null"/>, the collection remains nameless.</param>
+		/// <param name="lifetime">The <see cref="ServiceLifetime"/> for the registration. Defaults to <see cref="ServiceLifetime.Transient"/>.</param>
+		/// <returns>The <see cref="IServiceCollection"/> for method chaining.</returns>
+		public static IServiceCollection AddPolicyChain<TBuilder1, TBuilder2, TBuilder3>(
+			this IServiceCollection services,
+			string? policyName = null,
+			ServiceLifetime lifetime = ServiceLifetime.Transient)
+			where TBuilder1 : IPolicyBuilder<TBuilder1>
+			where TBuilder2 : IPolicyBuilder<TBuilder2>
+			where TBuilder3 : IPolicyBuilder<TBuilder3>
+		{
+			ArgumentNullException.ThrowIfNull(services);
+
+			services.Add(new ServiceDescriptor(
+				typeof(IPolicyBase),
+				sp => PolicyChainFactory.Create(
+					sp,
+					policyName,
+					typeof(IPolicy<TBuilder1>),
+					typeof(IPolicy<TBuilder2>),
+					typeof(IPolicy<TBuilder3>)),
+				lifetime));
+
+			return services;
+		}
+
+		/// <summary>
+		/// Registers a <see cref="PolicyCollection"/> composed of the policies built by four registered
+		/// <see cref="IPolicyBuilder{TBuilder}"/> types as a non-keyed <see cref="IPolicyBase"/> service.
+		/// </summary>
+		/// <remarks>
+		/// <para>
+		/// All builder types must already be registered in the <see cref="IServiceCollection"/>
+		/// (e.g., via <see cref="AddPoliNorError(IServiceCollection, Assembly, ServiceLifetime)"/>).
+		/// When the service is resolved, the policies returned by their
+		/// <see cref="IPolicyBuilder{TBuilder}.Build"/> methods are appended to a new
+		/// <see cref="PolicyCollection"/> in the order in which the type parameters are specified.
+		/// </para>
+		/// <para>
+		/// See the remarks of <see cref="AddPolicyChain{TBuilder1, TBuilder2}(IServiceCollection, string, ServiceLifetime)"/>
+		/// for details on resolution semantics, lifetime, and naming — including the
+		/// <see cref="IPolicyBase"/> duplicate-registration (last wins) and lifetime caveats.
+		/// </para>
+		/// </remarks>
+		/// <typeparam name="TBuilder1">The type of the builder whose policy is the first element of the chain.</typeparam>
+		/// <typeparam name="TBuilder2">The type of the builder whose policy is the second element of the chain.</typeparam>
+		/// <typeparam name="TBuilder3">The type of the builder whose policy is the third element of the chain.</typeparam>
+		/// <typeparam name="TBuilder4">The type of the builder whose policy is the fourth element of the chain.</typeparam>
+		/// <param name="services">The <see cref="IServiceCollection"/> to add the service to.</param>
+		/// <param name="policyName">An optional name for the chain. If <see langword="null"/>, the collection remains nameless.</param>
+		/// <param name="lifetime">The <see cref="ServiceLifetime"/> for the registration. Defaults to <see cref="ServiceLifetime.Transient"/>.</param>
+		/// <returns>The <see cref="IServiceCollection"/> for method chaining.</returns>
+		public static IServiceCollection AddPolicyChain<TBuilder1, TBuilder2, TBuilder3, TBuilder4>(
+			this IServiceCollection services,
+			string? policyName = null,
+			ServiceLifetime lifetime = ServiceLifetime.Transient)
+			where TBuilder1 : IPolicyBuilder<TBuilder1>
+			where TBuilder2 : IPolicyBuilder<TBuilder2>
+			where TBuilder3 : IPolicyBuilder<TBuilder3>
+			where TBuilder4 : IPolicyBuilder<TBuilder4>
+		{
+			ArgumentNullException.ThrowIfNull(services);
+
+			services.Add(new ServiceDescriptor(
+				typeof(IPolicyBase),
+				sp => PolicyChainFactory.Create(
+					sp,
+					policyName,
+					typeof(IPolicy<TBuilder1>),
+					typeof(IPolicy<TBuilder2>),
+					typeof(IPolicy<TBuilder3>),
+					typeof(IPolicy<TBuilder4>)),
+				lifetime));
+
+			return services;
+		}
+
+		private static class PolicyChainFactory
+		{
+			public static IPolicyBase Create(IServiceProvider serviceProvider, string? policyName, params Type[] policyServiceTypes)
+			{
+				var collection = new PolicyCollection();
+
+				foreach (var policyServiceType in policyServiceTypes)
+				{
+					collection.WithPolicy((IPolicyBase)serviceProvider.GetRequiredService(policyServiceType));
+				}
+
+				return policyName is null ? collection : collection.WithPolicyName(policyName);
+			}
+		}
+
 		private static bool InheritsFromPolicyConfigurator(Type? type)
 		{
 			while (type != null && type != typeof(object))

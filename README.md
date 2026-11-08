@@ -173,6 +173,39 @@ public class Worker
 
 ---
 
+## 🧩 Policy Chains (2–4 Builders)
+
+For ordered multi-policy pipelines, use `AddPolicyChain<TBuilder1, TBuilder2, …>()` to register a chain of 2–4 DI-built policies as a single `IPolicyBase` service.
+
+```csharp
+services
+	.AddPoliNorError(Assembly.GetExecutingAssembly())
+	.AddPolicyChain<RetryPolicyBuilder, FallbackPolicyBuilder>(policyName: "orders-pipeline");
+
+public class OrderService
+{
+	private readonly IPolicyBase _orderPipeline;
+
+	public OrderService(IPolicyBase orderPipeline)
+	{
+		_orderPipeline = orderPipeline;
+	}
+
+	public PolicyResult Process() => _orderPipeline.Handle(SubmitOrder);
+}
+```
+
+**Guidance:**
+- **1 builder** → use `AddKeyedPolicy<TBuilder>("key")` and inject via `[FromKeyedServices("key")] IPolicy`.
+- **2–4 builders** → use `AddPolicyChain<…>()` for an ordered pipeline.
+- **5+ builders** → use `IPolicyRegistry` for scalable policy resolution.
+
+**Caveats:**
+- Registering multiple chains under `IPolicyBase` uses standard `Add` semantics: resolving a single `IPolicyBase` returns the **last registered** chain. Use `GetServices<IPolicyBase>()` to enumerate all.
+- `ServiceLifetime.Transient` (default) is recommended: `PolicyCollection` is mutable, and `Singleton` shares one instance across all consumers.
+
+---
+
 
 ## 🔥 Advanced Usage: Separation of Concerns with Configurators and Builders
 
