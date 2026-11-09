@@ -41,6 +41,10 @@ namespace KeyedPolicyDemo
 				// Builder-based keyed policies: the same builder registered under two keys.
 				// "retry-primary" follows the default (Transient) lifetime;
 				// "retry-relaxed" is a Singleton, so the built policy is cached.
+				// A Singleton keyed policy is resolved once from the root provider, so its whole
+				// chain must be stateless/singleton-compatible — a Scoped link would throw.
+				// Here the chain is Transient (stateless builder and configurator), which the
+				// lifetime guard accepts. See the lifetime remarks on AddKeyedPolicy in the docs.
 				.AddKeyedPolicy<SomePolicyBuilder>("retry-primary")
 				.AddKeyedPolicy<SomePolicyBuilder>("retry-relaxed", ServiceLifetime.Singleton)
 
